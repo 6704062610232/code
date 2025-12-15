@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Cozy Home – ระบบหอพัก</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root{--c1:#CCD5AE;--c2:#E9EDC9;--c3:#FEFAE0;--c4:#FAEDCD;--c5:#D4A373;}
+*{box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+body{margin:0;background:#fff;color:#333;}
+.topbar{height:56px;background:var(--c5);display:flex;align-items:center;justify-content:space-between;padding:0 20px;color:#fff;}
+.topbar .left{font-weight:700;font-size:18px;}
+.topbar .right{display:flex;gap:16px;align-items:center;}
+.topbar .icon{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;}
+.wrapper{padding:24px;background:#e6e6e6;min-height:calc(100vh - 56px);}
+.page{background:#fff;border-radius:10px;padding:20px;display:none;}
+.page h2{text-align:center;margin-top:0;}
+.tabs{display:flex;border-radius:8px;overflow:hidden;margin-bottom:14px;}
+.tab{flex:1;text-align:center;padding:10px;font-weight:600;cursor:pointer;opacity:.4;}
+.tab.active{opacity:1;}
+.tab.water{background:#4fc3f7;color:#fff;}
+.tab.electric{background:#ef5350;color:#fff;}
+.table{width:100%;border-collapse:collapse;}
+.table th,.table td{padding:10px;border-bottom:1px solid #eee;text-align:center;}
+.table th{background:#f3f3f3;}
+.input-lite{background:#dff3f3;border:1px solid #b7e1e1;border-radius:4px;padding:4px 6px;}
+.bill-grid,.floor-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:12px;margin-top:16px;}
+.bill-card,.room-card{border-radius:12px;padding:14px;text-align:center;color:#fff;cursor:pointer;position:relative;font-size:14px;}
+.bill-card.green,.room-card.green{background:#7cb342;}
+.bill-card.red,.room-card.red{background:#ef5350;}
+.bill-card.gray,.room-card.gray{background:#ccc;color:#555;cursor:default;}
+.receipt,.popup{position:absolute;background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;width:220px;font-size:12px;display:none;z-index:10;}
+.chart-container{border:1px solid #eee;border-radius:12px;padding:14px;margin-bottom:20px;background:#fff;}
+.chart-title{text-align:center;margin-top:0;margin-bottom:10px;}
+.data-row{display:flex;justify-content:flex-start;align-items:center;margin:4px 0;gap:6px;}
+.data-row button{width:16px;height:16px;border:none;margin:0;vertical-align:middle;}
+.value{margin-left:auto;text-align:right;flex:0 0 100px;}
+.stats{display:flex;gap:12px;justify-content:center;margin-bottom:12px;}
+.stats div{padding:6px 12px;background:#fff;border-radius:8px;border:1px solid #ccc;font-weight:600;}
+.icon{display:block;font-size:18px;margin-bottom:4px;}
+
+/* ---------- LOGIN MODERN ---------- */
+#loginPage{position:fixed;inset:0;background:linear-gradient(135deg,#CCD5AE,#FEFAE0);display:flex;align-items:center;justify-content:center;z-index:9999;}
+#loginPage .login-card{width:380px;background:#fff;border-radius:16px;padding:32px;text-align:center;transition:transform 0.3s;}
+#loginPage h2{margin-top:0;color:#4CAF50;}
+#loginPage p{color:#777;margin-bottom:24px;}
+#loginPage input{width:100%;padding:14px 12px;border-radius:10px;border:1px solid #ccc;font-size:16px;outline:none;transition:0.3s;margin-bottom:16px;}
+#loginPage input:focus{border-color:#7cb342;}
+#loginPage button{width:100%;padding:14px;font-size:16px;border:none;border-radius:10px;background:#7cb342;color:#fff;font-weight:600;cursor:pointer;transition:0.3s;}
+#loginPage button:hover{background:#5a9b2f;}
+
+/* ---------- LEASE FORM ---------- */
+#pageLease input,#pageLease textarea{font-size:14px;padding:6px;border-radius:6px;border:1px solid #ccc;width:100%;}
+#pageLease textarea{height:50px;}
+#pageLease button{font-size:14px;height:36px;padding:6px;background:#D4A373;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-top:8px;}
+#leaseSummary{display:none;max-width:700px;margin:auto;padding:16px;border:1px solid #ccc;border-radius:12px;background:#f9f9f9;}
+#leaseSummary button{margin-top:12px;font-size:14px;height:36px;padding:6px;background:#7cb342;color:#fff;border:none;border-radius:6px;cursor:pointer;}
+
+/* ---------- Popup Buttons ---------- */
+.popup-buttons{
+  display:flex;
+  gap:8px;
+  justify-content:flex-start;
+  margin-top:8px;
+}
+.popup-buttons button{
+  flex:1;
+  padding:6px;
+  font-size:12px;
+  border-radius:6px;
+  border:none;
+  background:#7cb342;
+  color:#fff;
+  cursor:pointer;
+}
+.popup-buttons button:nth-child(2){background:#ef5350;}
+.popup-buttons button:nth-child(3){background:#FFA500;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage">
+  <div class="login-card">
+    <h2>Cozy Home Login</h2>
+    <p>ระบบจัดการหอพัก</p>
+    <input id="email" type="email" placeholder="อีเมล">
+    <input id="password" type="password" placeholder="รหัสผ่าน">
+    <button onclick="login()">เข้าสู่ระบบ</button>
+    <p style="font-size:13px;color:#aaa;margin-top:16px;">Demo Login: กรอกอะไรก็ได้</p>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="left">Cozy Home</div>
+  <div class="right">
+    <div class="icon" onclick="showPage(0)">🏢</div>
+    <div class="icon" onclick="showPage(1)">📄</div>
+    <div class="icon" onclick="showPage(2)">📊</div>
+    <div class="icon" onclick="showPage(3)">🗺️</div>
+    <div class="icon" onclick="showPage(4)">📑</div>
+    <div class="icon" onclick="showPage(5)">📃</div>
+    <div class="icon">Nicha</div>
+    <div class="icon" onclick="logout()">🏠</div>
+  </div>
+</div>
+
+<div class="wrapper">
+
+<!-- PAGE 0 : มิเตอร์ -->
+<div class="page" id="pageMeter">
+<h2>จดมิเตอร์</h2>
+<div class="tabs">
+  <div class="tab water active" onclick="switchTab(this)">💧 ค่าน้ำ</div>
+  <div class="tab electric" onclick="switchTab(this)">⚡ ค่าไฟ</div>
+</div>
+<div id="meterContainer"></div>
+</div>
+
+<!-- PAGE 1 : เลือกรอบบิล -->
+<div class="page" id="pageBill">
+<h2>เลือกรอบบิล</h2>
+<div style="display:flex;justify-content:center;align-items:center;margin-bottom:12px;flex-direction:column;">
+  <input type="month" value="2025-12" id="billMonth" style="padding:6px 10px;border-radius:6px;border:1px solid #ccc;margin-bottom:8px;">
+  <div style="font-weight:600;">ภาพรวมบิลค่าเช่า</div>
+</div>
+<div id="billContainer"></div>
+<div class="receipt" id="billPreview">
+  <b>แจ้งชำระเงิน</b><br><br>
+  <p>ห้อง <b><span id="billRoom"></span></b></p>
+  <p>ยอดที่ต้องชำระ <b><span id="billAmount">-</span></b></p>
+  <p>สถานะ: <b id="billStatus">-</b></p>
+</div>
+</div>
+
+<!-- PAGE 2 : วิเคราะห์รายรับ -->
+<div class="page" id="pageAnalysis">
+  <div class="chart-container">
+    <h2 class="chart-title">วิเคราะห์รายรับค่าเช่ารายเดือน</h2>
+    <div style="display:flex;align-items:flex-start;gap:20px;">
+      <canvas id="paymentPie" width="250" height="250"></canvas>
+      <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+        <div class="data-row"><button style="background:#7cb342"></button><span>ผู้เช่าชำระแล้ว</span><span class="value" id="paidAmount">0 บาท</span></div>
+        <div class="data-row"><button style="background:#ef5350"></button><span>ผู้เช่าค้างชำระค่าเช่า</span><span class="value" id="unpaidAmount">0 บาท</span></div>
+        <hr>
+        <div class="data-row"><span>รวมสุทธิ</span><span class="value" id="totalAmount">0 บาท</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="chart-container">
+    <h2 class="chart-title">สรุปรายรับค่าเช่ารายเดือน มกราคม/2025 - ธันวาคม/2025</h2>
+    <canvas id="monthlyBar" width="600" height="200"></canvas>
+  </div>
+</div>
+
+<!-- PAGE 3 : ผังห้อง -->
+<div class="page" id="pageMap">
+<h2>ผังห้อง</h2>
+<div class="stats">
+  <div>อัตราการเข้าพัก: <span id="occupancy">0%</span></div>
+  <div>ห้องค้างชำระ: <span id="dueRooms">0</span></div>
+  <div>ห้องจอง: <span id="bookedRooms">0</span></div>
+  <div>ห้องว่าง: <span id="emptyRooms">0</span></div>
+</div>
+<div id="mapContainer"></div>
+<div class="popup" id="roomPopup">
+  <b>เลขห้อง: <span id="roomNo"></span></b><br>
+  <div class="icon">👤</div>
+  <p>ชื่อผู้เช่า: <span id="roomName"></span></p>
+  <p>เบอร์โทร: <span id="roomPhone"></span></p>
+  <p>เชื่อมหอพักวันที่: <span id="roomDate"></span></p>
+  <div class="popup-buttons">
+    <button onclick="alert('ดูข้อมูลผู้เช่า')">ดูข้อมูล</button>
+    <button onclick="alert('ลบผู้เช่า')">ลบผู้เช่า</button>
+    <button onclick="alert('ย้ายห้อง')">ย้ายห้อง</button>
+  </div>
+</div>
+
+<!-- PAGE 4 : รายงานสรุป -->
+<div class="page" id="pageReport">
+<h2>รายงานสรุปการชำระเงิน</h2>
+<div style="overflow-x:auto;">
+<table class="table" id="reportTable">
+<thead>
+<tr>
+<th>ห้อง</th><th>ผู้เช่า</th><th>เลขที่ใบเสร็จ</th><th>วันที่รับชำระ</th><th>ช่องทาง</th>
+<th>รับชำระโดย</th><th>ค่าเช่าห้อง</th><th>ค่าน้ำ</th><th>ค่าไฟ</th><th>ค่าบำรุง</th><th>รวม</th>
+</tr>
+</thead>
+<tbody id="reportBody"></tbody>
+</table>
+</div>
+</div>
+
+<!-- PAGE 5 : สัญญาเช่า -->
+<div class="page" id="pageLease">
+<h2>สัญญาเช่า</h2>
+<div id="leaseForm" style="display:flex;flex-direction:column;gap:8px;max-width:500px;margin:auto;">
+  <label>ชื่อหอพัก</label>
+  <input id="leaseDormName">
+  
+  <label>ที่อยู่หอพัก</label>
+  <input id="leaseDormAddress">
+  
+  <label>วันที่ปัจจุบัน</label>
+  <input id="leaseCurrentDate">
+  
+  <label>เดือน/ปีปัจจุบัน</label>
+  <input id="leaseCurrentMonth">
+  
+  <label>ชื่อผู้เช่า</label>
+  <input id="leaseTenantName">
+  
+  <label>ที่อยู่ผู้เช่า</label>
+  <textarea id="leaseTenantAddress"></textarea>
+  
+  <label>หมายเลขบัตรประชาชน</label>
+  <input id="leaseTenantID">
+  
+  <label>เบอร์โทรผู้เช่า</label>
+  <input id="leaseTenantPhone">
+  
+  <label>หมายเลขห้อง</label>
+  <input id="leaseRoomNo">
+  
+  <label>หมายเลขชั้น</label>
+  <input id="leaseFloorNo">
+  
+  <label>ระยะเวลาสัญญา</label>
+  <input id="leaseDuration">
+  
+  <label>วันที่เริ่มต้นสัญญา</label>
+  <input id="leaseStartDate">
+  
+  <label>วันที่สิ้นสุดสัญญา</label>
+  <input id="leaseEndDate">
+  
+  <label>เงินประกันห้อง</label>
+  <input id="leaseDeposit">
+  
+  <label>ค่าเช่าห้อง</label>
+  <input id="leaseRent">
+  
+  <label>วันที่สิ้นสุดการชำระเงิน</label>
+  <input id="leasePayDueDate">
+  
+  <label>เลขมิเตอร์ไฟเข้าพัก</label>
+  <input id="leaseElectricMeter">
+  
+  <label>เลขมิเตอร์น้ำเข้าพัก</label>
+  <input id="leaseWaterMeter">
+  
+  <button onclick="generateLease()">สร้างสัญญา</button>
+</div>
+
+<div id="leaseSummary">
+  <h3>สัญญาเช่า</h3>
+  <div id="leaseContent"></div>
+  <button onclick="printLease()">พิมพ์สัญญา</button>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// -------------------- ข้อมูล --------------------
+const rentPrice=4500;
+const maintenanceFee=100;
+const waterPricePerUnit=20;
+const electricPricePerUnit=8;
+let roomData=[];
+
+// -------------------- Login --------------------
+let currentUser={role:'admin',room:1}; // demo
+function login(){
+  const email=document.getElementById('email').value;
+  const pass=document.getElementById('password').value;
+  if(email && pass){
+    document.getElementById('loginPage').style.display='none';
+    generateRoomData();
+    showPage(0);
+    initMeter(); initBill(); initAnalysis(); initMap(); initReport();
+  } else alert('กรุณากรอก Email และ Password');
+}
+function logout(){location.reload();}
+function showPage(index){document.querySelectorAll('.page').forEach((p,i)=>p.style.display=i===index?'block':'none');}
+
+// -------------------- Room Data --------------------
+function generateRoomData(){
+  for(let f=1;f<=5;f++){
+    roomData[f]=[];
+    for(let r=1;r<=10;r++){
+      let rand=Math.random(), status='ปกติ';
+      if(rand<0.15) status='ค้างชำระ';
+      else if(rand<0.3) status='ว่าง';
+      const water=Math.floor(Math.random()*50);
+      const electric=Math.floor(Math.random()*200);
+      roomData[f][r]={status,water,electric};
+    }
+  }
+}
+
+// -------------------- Meter --------------------
+function initMeter(){
+  const container=document.getElementById('meterContainer'); container.innerHTML='';
+  for(let f=1;f<=5;f++){
+    const floorDiv=document.createElement('div'); floorDiv.innerHTML=`<h3>ชั้น ${f}</h3>`;
+    ['water','electric'].forEach(type=>{
+      const tbl=document.createElement('table'); tbl.className='table meterTable'; tbl.dataset.type=type;
+      tbl.style.display=(type=='water')?'table':'none';
+      let html=`<tr><th colspan="5">${type=='water'?'💧 ตารางค่าน้ำ':'⚡ ตารางค่าไฟ'}</th></tr>
+      <tr><th>ห้อง</th><th>สถานะ</th><th>เลขก่อนหน้า</th><th>เลขล่าสุด</th><th>หน่วยใช้</th></tr>`;
+      for(let r=1;r<=10;r++){
+        const room=roomData[f][r];
+        let statusIcon='👤';
+        if(room.status==='ค้างชำระ') statusIcon='❌';
+        else if(room.status==='ว่าง') statusIcon='🟢';
+        html+=`<tr><td>${r}</td><td>${statusIcon}</td><td>${room[type]}</td><td>${room[type]+Math.floor(Math.random()*10)}</td><td>${Math.floor(Math.random()*10)}</td></tr>`;
+      }
+      tbl.innerHTML=html; floorDiv.appendChild(tbl);
+    });
+    container.appendChild(floorDiv);
+  }
+}
+function switchTab(el){
+  el.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const type=el.classList.contains('water')?'water':'electric';
+  document.querySelectorAll('.meterTable').forEach(t=>t.style.display=t.dataset.type==type?'table':'none');
+}
+
+// -------------------- Bill --------------------
+function initBill(){
+  const container=document.getElementById('billContainer'); container.innerHTML='';
+  for(let f=1;f<=5;f++){
+    const floorDiv=document.createElement('div'); floorDiv.innerHTML=`<h4>ชั้น ${f}</h4>`;
+    const grid=document.createElement('div'); grid.className='bill-grid';
+    for(let r=1;r<=10;r++){
+      const room=roomData[f][r];
+      const card=document.createElement('div');
+      card.className='bill-card '+(room.status==='ค้างชำระ'?'red':room.status==='ว่าง'?'gray':'green');
+      card.innerHTML=`${r}<br>${rentPrice+maintenanceFee} บาท`;
+      card.onclick=(e)=>showBillPopup(e,f,r);
+      grid.appendChild(card);
+    }
+    floorDiv.appendChild(grid);
+    container.appendChild(floorDiv);
+  }
+}
+function showBillPopup(e,f,r){
+  const room=roomData[f][r];
+  const popup=document.getElementById('billPreview');
+  popup.style.display='block';
+  popup.style.left=(e.pageX+10)+'px';
+  popup.style.top=(e.pageY+10)+'px';
+  document.getElementById('billRoom').innerText=`${r} ชั้น ${f}`;
+  document.getElementById('billAmount').innerText=`${rentPrice+maintenanceFee} บาท`;
+  document.getElementById('billStatus').innerText=room.status;
+}
+
+// -------------------- Analysis --------------------
+function initAnalysis(){
+  // Pie Chart
+  const ctx1=document.getElementById('paymentPie').getContext('2d');
+  let paid=0, unpaid=0;
+  for(let f=1;f<=5;f++) for(let r=1;r<=10;r++){if(roomData[f][r].status==='ค้างชำระ') unpaid+=rentPrice; else paid+=rentPrice;}
+  document.getElementById('paidAmount').innerText=paid+' บาท';
+  document.getElementById('unpaidAmount').innerText=unpaid+' บาท';
+  document.getElementById('totalAmount').innerText=(paid+unpaid)+' บาท';
+  new Chart(ctx1,{type:'pie',data:{labels:['ชำระแล้ว','ค้างชำระ'],datasets:[{data:[paid,unpaid],backgroundColor:['#7cb342','#ef5350']}]},options:{responsive:false}});
+  // Bar Chart
+  const ctx2=document.getElementById('monthlyBar').getContext('2d');
+  let months=Array.from({length:12},(_,i)=>i+1); let monthly=[];
+  months.forEach(m=>{let total=0; for(let f=1;f<=5;f++) for(let r=1;r<=10;r++) total+=rentPrice; monthly.push(total);});
+  new Chart(ctx2,{type:'bar',data:{labels:months.map(m=>'เดือน '+m),datasets:[{label:'รายรับ',data:monthly,backgroundColor:'#4fc3f7'}]},options:{responsive:false}});
+}
+
+// -------------------- Map --------------------
+function initMap(){
+  const container=document.getElementById('mapContainer'); container.innerHTML='';
+  for(let f=1;f<=5;f++){
+    const floorDiv=document.createElement('div'); floorDiv.innerHTML=`<h4>ชั้น ${f}</h4>`;
+    const grid=document.createElement('div'); grid.className='floor-grid';
+    for(let r=1;r<=10;r++){
+      const room=roomData[f][r];
+      const card=document.createElement('div');
+      let cls='room-card '+(room.status==='ค้างชำระ'?'red':room.status==='ว่าง'?'gray':'green');
+      card.className=cls; card.innerHTML=`${r}`;
+      card.onclick=(e)=>showRoomPopup(e,f,r);
+      grid.appendChild(card);
+    }
+    floorDiv.appendChild(grid);
+    container.appendChild(floorDiv);
+  }
+}
+function showRoomPopup(e,f,r){
+  const room=roomData[f][r];
+  const popup=document.getElementById('roomPopup');
+  popup.style.display='block';
+  popup.style.left=(e.pageX+10)+'px';
+  popup.style.top=(e.pageY+10)+'px';
+  document.getElementById('roomNo').innerText=r;
+  document.getElementById('roomName').innerText='นายเอ';
+  document.getElementById('roomPhone').innerText='0812345678';
+}
+
+// -------------------- Report --------------------
+function initReport(){
+  const tbody=document.getElementById('reportBody'); tbody.innerHTML='';
+  for(let f=1;f<=5;f++){
+    for(let r=1;r<=10;r++){
+      const room=roomData[f][r];
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${r}</td><td>นายเอ</td><td>R${f}${r}001</td><td>2025-12-14</td>
+      <td>โอนเงิน</td><td>Admin</td><td>${rentPrice}</td><td>${room.water*waterPricePerUnit}</td><td>${room.electric*electricPricePerUnit}</td><td>${maintenanceFee}</td><td>${rentPrice+room.water*waterPricePerUnit+room.electric*electricPricePerUnit+maintenanceFee}</td>`;
+      tbody.appendChild(tr);
+    }
+  }
+}
+
+// -------------------- Lease --------------------
+function generateLease(){
+  let content=`ชื่อหอพัก: ${document.getElementById('leaseDormName').value}<br>`;
+  content+=`ที่อยู่หอพัก: ${document.getElementById('leaseDormAddress').value}<br>`;
+  content+=`ผู้เช่า: ${document.getElementById('leaseTenantName').value}<br>`;
+  content+=`ห้อง: ${document.getElementById('leaseRoomNo').value} ชั้น ${document.getElementById('leaseFloorNo').value}<br>`;
+  document.getElementById('leaseContent').innerHTML=content;
+  document.getElementById('leaseSummary').style.display='block';
+}
+function printLease(){window.print();}
+</script>
+
+</body>
+</html>
