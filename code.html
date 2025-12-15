@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Cozy Home – ระบบหอพัก</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root{
+  --c1:#CCD5AE; --c2:#E9EDC9; --c3:#FEFAE0; --c4:#FAEDCD; --c5:#D4A373;
+}
+*{box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+body{margin:0;background:#fff;color:#333;}
+.topbar{height:56px;background:var(--c5);display:flex;align-items:center;justify-content:space-between;padding:0 20px;color:#fff;}
+.topbar .left{font-weight:700;font-size:18px;}
+.topbar .right{display:flex;gap:16px;align-items:center;}
+.topbar .icon{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;}
+.wrapper{padding:24px;background:#e6e6e6;min-height:calc(100vh - 56px);}
+.page{background:#fff;border-radius:10px;padding:20px;display:none;}
+.page h2{text-align:center;margin-top:0;}
+.tabs{display:flex;border-radius:8px;overflow:hidden;margin-bottom:14px;}
+.tab{flex:1;text-align:center;padding:10px;font-weight:600;cursor:pointer;opacity:.4;}
+.tab.active{opacity:1;}
+.tab.water{background:#4fc3f7;color:#fff;}
+.tab.electric{background:#ef5350;color:#fff;}
+.table{width:100%;border-collapse:collapse;}
+.table th,.table td{padding:10px;border-bottom:1px solid #eee;text-align:center;}
+.table th{background:#f3f3f3;}
+.input-lite{background:#dff3f3;border:1px solid #b7e1e1;border-radius:4px;padding:4px 6px;}
+.bill-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:16px;}
+.bill-card{border-radius:12px;padding:14px;text-align:center;background:#7cb342;color:#fff;cursor:pointer;position:relative;}
+.bill-card.red{background:#ef5350;}
+.bill-card.gray{background:#ccc;color:#555;cursor:default;}
+.receipt{position:absolute;background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;width:180px;font-size:12px;display:none;z-index:10;}
+.chart-container{border:1px solid #eee;border-radius:12px;padding:14px;margin-bottom:20px;background:#fff;}
+.chart-title{text-align:center;margin-top:0;margin-bottom:10px;}
+.data-row{display:flex;justify-content:flex-start;align-items:center;margin:4px 0;gap:6px;}
+.data-row button{width:16px;height:16px;border:none;margin:0;vertical-align:middle;}
+.value{margin-left:auto;text-align:right;flex:0 0 100px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage" style="position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:9999;">
+  <div style="width:360px;border:1px solid #eee;border-radius:12px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.08);">
+    <h2 style="text-align:center;margin-top:0;">เข้าสู่ระบบ</h2>
+    <label>อีเมล</label>
+    <input id="email" type="email" placeholder="example@email.com" style="width:100%;padding:10px;margin:6px 0 12px;border-radius:8px;border:1px solid #ccc;">
+    <label>รหัสผ่าน</label>
+    <input id="password" type="password" placeholder="••••••••" style="width:100%;padding:10px;margin:6px 0 16px;border-radius:8px;border:1px solid #ccc;">
+    <button onclick="login()" style="width:100%;padding:10px;border:none;border-radius:8px;background:var(--c5);color:#fff;font-size:16px;">เข้าสู่ระบบ</button>
+    <p style="text-align:center;font-size:13px;color:#777;margin-top:12px;">Demo Login</p>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="left">Cozy Home</div>
+  <div class="right">
+    <div class="icon" onclick="showPage(0)">🏢</div>
+    <div class="icon" onclick="showPage(1)">📄</div>
+    <div class="icon" onclick="showPage(2)">📊</div>
+    <div class="icon">Nicha</div>
+    <div class="icon" onclick="logout()">🏠</div>
+  </div>
+</div>
+
+<div class="wrapper">
+
+<!-- PAGE 1 : มิเตอร์ -->
+<div class="page" id="pageMeter">
+<h2>จดมิเตอร์</h2>
+<div class="tabs">
+  <div class="tab water active" onclick="switchTab(this)">💧 ค่าน้ำ</div>
+  <div class="tab electric" onclick="switchTab(this)">⚡ ค่าไฟ</div>
+</div>
+<div id="meterContainer"></div>
+</div>
+
+<!-- PAGE 2 : เลือกรอบบิล -->
+<div class="page" id="pageBill" style="position:relative;">
+<h2>เลือกรอบบิล</h2>
+<div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:12px;">
+  <input type="month" value="2025-12" style="padding:6px 10px;border-radius:6px;border:1px solid #ccc;">
+</div>
+<div id="billContainer"></div>
+<div class="receipt" id="billPreview">
+  <b>แจ้งชำระเงิน</b><br><br>
+  <p>ห้อง <b><span id="billRoom"></span></b></p>
+  <p>ยอดที่ต้องชำระ <b><span id="billAmount">-</span></b></p>
+  <p>สถานะ: <b id="billStatus">-</b></p>
+</div>
+</div>
+
+<!-- PAGE 3 : วิเคราะห์รายรับ -->
+<div class="page" id="pageAnalysis">
+  <div class="chart-container">
+    <h2 class="chart-title">วิเคราะห์รายรับค่าเช่ารายเดือน</h2>
+    <div style="display:flex;align-items:flex-start;gap:20px;">
+      <canvas id="paymentPie" width="250" height="250"></canvas>
+      <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+        <div class="data-row"><button style="background:#7cb342"></button><span>ผู้เช่าชำระค่าเช่าแล้ว</span><span class="value" id="paidAmount">0 บาท</span></div>
+        <div class="data-row"><button style="background:#4fc3f7"></button><span>ชำระด้วยเงินสด</span><span class="value" id="cashAmount">0 บาท</span></div>
+        <div class="data-row"><button style="background:#ffd54f"></button><span>ชำระผ่านการโอนเงิน</span><span class="value" id="transferAmount">0 บาท</span></div>
+        <div class="data-row"><button style="background:#ef5350"></button><span>ชำระผ่านบัตรเครดิต/เดบิต</span><span class="value" id="cardAmount">0 บาท</span></div>
+        <div class="data-row"><button style="background:#b0bec5"></button><span>ผู้เช่าค้างชำระค่าเช่า</span><span class="value" id="unpaidAmount">0 บาท</span></div>
+        <hr>
+        <div class="data-row"><span>รวมสุทธิ</span><span class="value" id="totalAmount">0 บาท</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-container">
+    <h2 class="chart-title">สรุปรายรับค่าเช่ารายเดือน มกราคม/2025 - ธันวาคม/2025</h2>
+    <canvas id="monthlyBar" width="600" height="200"></canvas>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let roomData=[];
+
+function login(){
+  const email=document.getElementById('email').value;
+  const pass=document.getElementById('password').value;
+  if(email && pass){
+    document.getElementById('loginPage').style.display='none';
+    generateRoomData();
+    showPage(0);
+    initMeter();
+    initBill();
+    initAnalysis();
+  } else alert('กรุณากรอก Email และ Password');
+}
+function logout(){location.reload();}
+function showPage(index){
+  document.querySelectorAll('.page').forEach((p,i)=>p.style.display=i===index?'block':'none');
+}
+
+// สร้างข้อมูลห้อง
+function generateRoomData(){
+  for(let f=1; f<=5; f++){
+    roomData[f]=[];
+    for(let r=1; r<=10; r++){
+      let rand=Math.random(), status='ปกติ';
+      if(rand<0.15) status='ค้างชำระ';
+      else if(rand<0.3) status='ว่าง';
+      const amount = status==='ปกติ'? 3000 + Math.floor(Math.random()*1000) : status==='ค้างชำระ'? 3500 : 0;
+      const cash = status==='ปกติ'? Math.floor(amount*0.3) : 0;
+      const transfer = status==='ปกติ'? Math.floor(amount*0.4) : 0;
+      const card = status==='ปกติ'? amount - cash - transfer : 0;
+      const unpaid = status==='ค้างชำระ'? amount : 0;
+      roomData[f][r]={status, amount, cash, transfer, card, unpaid};
+    }
+  }
+}
+
+// จดมิเตอร์
+function initMeter(){
+  const container=document.getElementById('meterContainer');
+  container.innerHTML='';
+  for(let f=1; f<=5; f++){
+    const floorDiv=document.createElement('div');
+    floorDiv.innerHTML=`<h3>ชั้น ${f}</h3>`;
+    ['water','electric'].forEach(type=>{
+      const tbl=document.createElement('table');
+      tbl.className='table meterTable'; tbl.dataset.type=type;
+      tbl.style.display=(type=='water')?'table':'none';
+      let html=`<tr><th colspan="5">${type=='water'?'💧 ตารางค่าน้ำ':'⚡ ตารางค่าไฟ'}</th></tr>
+      <tr><th>ห้อง</th><th>สถานะ</th><th>เลขก่อนหน้า</th><th>เลขล่าสุด</th><th>หน่วยใช้</th></tr>`;
+      for(let r=1;r<=10;r++){
+        const room=roomData[f][r];
+        let statusIcon='👤';
+        if(room.status==='ค้างชำระ') statusIcon='❌';
+        else if(room.status==='ว่าง') statusIcon='⛔';
+        let prev=Math.floor(Math.random()*(type=='water'?500:10000));
+        let curr=prev+Math.floor(Math.random()*(type=='water'?100:500));
+        let input=`<input class="input-lite" value="${curr}" ${room.status==='ว่าง'?'disabled':''} oninput="calcUnit(this)">`;
+        html+=`<tr>
+          <td>${f}0${r}</td>
+          <td>${statusIcon}</td>
+          <td>${prev}</td>
+          <td>${input}</td>
+          <td class="unit">${curr-prev}</td>
+        </tr>`;
+      }
+      tbl.innerHTML=html;
+      floorDiv.appendChild(tbl);
+    });
+    container.appendChild(floorDiv);
+  }
+}
+function calcUnit(el){
+  const tr=el.closest('tr');
+  const prev=parseInt(tr.children[2].innerText);
+  const curr=parseInt(el.value)||0;
+  tr.querySelector('.unit').innerText=curr-prev;
+}
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.querySelectorAll('.meterTable').forEach(tbl=>{
+    tbl.style.display=(t.classList.contains('water') && tbl.dataset.type=='water')||(t.classList.contains('electric') && tbl.dataset.type=='electric')?'table':'none';
+  });
+}
+
+// เลือกรอบบิล
+function initBill(){
+  const container=document.getElementById('billContainer'); container.innerHTML='';
+  for(let f=1; f<=5; f++){
+    const floorDiv=document.createElement('div'); floorDiv.innerHTML=`<h3>ชั้น ${f}</h3>`;
+    const grid=document.createElement('div'); grid.className='bill-grid';
+    for(let r=1;r<=10;r++){
+      const div=document.createElement('div'); const room=roomData[f][r];
+      div.dataset.room=`${f}0${r}`; div.dataset.amount=room.amount; div.dataset.status=room.status;
+      if(room.status==='ค้างชำระ'){div.className='bill-card red';}
+      else if(room.status==='ว่าง'){div.className='bill-card gray';}
+      else{div.className='bill-card';}
+      div.innerHTML=`<div class="room">${f}0${r}</div><div class="price">${room.status==='ปกติ'?room.amount+' บาท':room.status}</div>`;
+      
+      div.onclick=function(e){
+        if(this.dataset.status==='ปกติ'||this.dataset.status==='ค้างชำระ'){
+          const preview = document.getElementById('billPreview');
+          preview.style.display = 'block';
+          const tdRoom = this.querySelector('.room') || this;
+          const rect = tdRoom.getBoundingClientRect();
+          // สูงขึ้น 100px และตรงกลางช่อง
+          preview.style.top = rect.top + window.scrollY - 120 + 'px';
+          preview.style.left = rect.left + window.scrollX + (rect.width/3) - (preview.offsetWidth/2.5) + 'px';
+          document.getElementById('billRoom').innerText = this.dataset.room;
+          document.getElementById('billAmount').innerText = this.dataset.amount + ' บาท';
+          document.getElementById('billStatus').innerText = this.dataset.status;
+        }
+      };
+      grid.appendChild(div);
+    }
+    floorDiv.appendChild(grid);
+    container.appendChild(floorDiv);
+  }
+}
+
+// วิเคราะห์รายรับ
+function initAnalysis(){
+  const pieColors=['#7cb342','#4fc3f7','#ffd54f','#ef5350','#b0bec5'];
+  const ctxPie=document.getElementById('paymentPie').getContext('2d');
+  const ctxBar=document.getElementById('monthlyBar').getContext('2d');
+  let pieData={labels:['ผู้เช่าชำระค่าเช่าแล้ว','ชำระด้วยเงินสด','ชำระผ่านการโอนเงิน','ชำระผ่านบัตรเครดิต/เดบิต','ผู้เช่าค้างชำระค่าเช่า'], datasets:[{data:[0,0,0,0,0], backgroundColor:pieColors}]};
+  let chartPie=new Chart(ctxPie,{type:'pie',data:pieData,options:{plugins:{legend:{display:false}}}});
+  let barLabels=['ม.ค','ก.พ','มี.ค','เม.ย','พ.ค','มิ.ย','ก.ค','ส.ค','ก.ย','ต.ค','พ.ย','ธ.ค'];
+  let barData={labels:barLabels,datasets:[{label:'รายรับ (บาท)',data:[],backgroundColor:'#7cb342'}]};
+  let chartBar=new Chart(ctxBar,{type:'bar',data:barData,options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}},onClick:(e,el)=>{if(el.length>0) updatePie(el[0].index);}}});
+
+  let monthlyData=[];
+  for(let m=0;m<12;m++){
+    let paidTotal=0, cashTotal=0, transferTotal=0, cardTotal=0, unpaidTotal=0;
+    for(let f=1; f<=5; f++){
+      for(let r=1; r<=10; r++){
+        const d=roomData[f][r]; let factor=0.9+Math.random()*0.2;
+        if(d.status==='ปกติ'){let total=Math.floor((d.cash+d.transfer+d.card)*factor);
+          paidTotal+=total; cashTotal+=Math.floor(d.cash*factor); transferTotal+=Math.floor(d.transfer*factor); cardTotal+=Math.floor(d.card*factor);}
+        else if(d.status==='ค้างชำระ'){unpaidTotal+=Math.floor(d.amount*factor);}
+      }
+    }
+    monthlyData.push({paidTotal,cashTotal,transferTotal,cardTotal,unpaidTotal,total:paidTotal+unpaidTotal});
+  }
+
+  function updatePie(monthIndex){
+    const data=monthlyData[monthIndex];
+    chartPie.data.datasets[0].data=[data.paidTotal,data.cashTotal,data.transferTotal,data.cardTotal,data.unpaidTotal];
+    chartPie.update();
+    document.getElementById('paidAmount').innerText=data.paidTotal.toLocaleString()+' บาท';
+    document.getElementById('cashAmount').innerText=data.cashTotal.toLocaleString()+' บาท';
+    document.getElementById('transferAmount').innerText=data.transferTotal.toLocaleString()+' บาท';
+    document.getElementById('cardAmount').innerText=data.cardTotal.toLocaleString()+' บาท';
+    document.getElementById('unpaidAmount').innerText=data.unpaidTotal.toLocaleString()+' บาท';
+    document.getElementById('totalAmount').innerText=data.total.toLocaleString()+' บาท';
+  }
+
+  barData.datasets[0].data=monthlyData.map(d=>d.total);
+  chartBar.update();
+  updatePie(11); // เริ่ม ธ.ค
+}
+</script>
+</body>
+</html>
