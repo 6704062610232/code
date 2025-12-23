@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>เลือกรอบบิล - Cozy Home Admin</title>
+    <!-- เพิ่มฟอนต์ Sarabun และ FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* --- ฟอนต์ Sarabun / Kanit --- */
+        :root {
+            --c1: #CCD5AE; --c2: #E9EDC9; --c3: #FEFAE0; --c4: #FAEDCD; --c5: #D4A373;
+            --success: #588157; --danger: #E5989B; --info: #0288d1; --excel: #217346;
+            --text: #555;
+        }
+
+        body { font-family: 'Sarabun', 'Kanit', sans-serif; background: var(--c3); margin: 0; padding: 20px; color: var(--text); }
+        
+        .container { max-width: 1200px; margin: auto; }
+
+        /* --- Header Area --- */
+        .header-brand { text-align: center; margin-bottom: 30px; }
+        .header-brand h1 { color: var(--c5); margin: 0; font-size: 32px; font-weight: 600; }
+
+        /* --- UI Admin หน้าหลัก --- */
+        .card { background: white; border-radius: 16px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,.08); }
+        .card h3 { margin-top: 0; border-bottom: 2px solid var(--c2); padding-bottom: 10px; color: var(--c5); margin-bottom: 20px; font-size: 18px; }
+        
+        .billing-grid { display: grid; grid-template-columns: 2fr 1.2fr; gap: 20px; }
+        @media (max-width: 1100px) { .billing-grid { grid-template-columns: 1fr; } }
+        
+        .config-box { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; background: #fafafa; padding: 20px; border-radius: 15px; border: 1px solid #eee; }
+        .input-group { display: flex; flex-direction: column; gap: 5px; }
+        .input-group label { font-size: 12px; font-weight: bold; color: #666; }
+        .input-group input, .input-group select { padding: 10px; border-radius: 12px; border: 2px solid #edf2f7; font-size: 14px; outline: none; font-family: 'Sarabun', sans-serif; }
+
+        .summary-card { background: #fffcf5; border: 2px dashed var(--c5); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; }
+        .price-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 4px; }
+        .total-row { border-top: 2px solid var(--c5); margin-top: 10px; padding-top: 10px; color: var(--success); font-weight: bold; font-size: 26px; text-align: right; }
+        
+        .btn-issue { width: 100%; padding: 16px; border: none; border-radius: 15px; background: var(--success); color: white; font-weight: bold; cursor: pointer; font-size: 18px; margin-top: 10px; font-family: 'Sarabun', sans-serif; transition: 0.3s; }
+        .btn-excel { width: 100%; padding: 12px; border: none; border-radius: 15px; background: var(--excel); color: white; font-weight: bold; cursor: pointer; font-size: 15px; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Sarabun', sans-serif; }
+        .btn-print-all { width: 100%; padding: 14px; border: none; border-radius: 15px; background: #2d4739; color: white; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; display: none; font-family: 'Sarabun', sans-serif; }
+
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 15px; }
+        .filter-btn { padding: 8px 18px; border-radius: 20px; border: 1.5px solid var(--c5); background: white; cursor: pointer; font-weight: bold; color: var(--c5); transition: 0.3s; font-family: 'Sarabun', sans-serif; font-size: 13px; }
+        .filter-btn.active { background: var(--c5); color: white; }
+        
+        .table-container { overflow-x: auto; border-radius: 15px; border: 1px solid #eee; }
+        .table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1000px; background: white; }
+        .table th, .table td { padding: 10px; border: 1px solid #eee; text-align: center; }
+        .table th { background: var(--c2); color: var(--text); font-weight: 600; }
+        .floor-header { background: #fafafa !important; text-align: left !important; font-weight: bold; padding-left: 20px !important; color: var(--c5); border-left: 5px solid var(--c5) !important; }
+
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 11px; }
+        .status-unpaid { background: #fff3f3; color: #d32f2f; border: 1px solid #ffcdd2; }
+        .status-paid { background: #f1f8e9; color: #388e3c; border: 1px solid #c8e6c9; }
+
+        /* --- Modal Overlays --- */
+        #modalOverlay, #excelPreviewOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(5px); }
+        .modal-card { background: white; width: 95%; max-width: 1100px; height: 85vh; border-radius: 35px; display: flex; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        
+        .excel-card { background: white; width: 98%; height: 90vh; border-radius: 20px; display: flex; flex-direction: column; padding: 25px; box-sizing: border-box; }
+        .excel-table-container { flex: 1; overflow: auto; border: 1px solid #bbb; margin-top: 15px; }
+        .excel-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .excel-table th { background: #f2f2f2; position: sticky; top: 0; z-index: 10; border: 1px solid #aaa; padding: 10px; }
+        .excel-table td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+
+        .modal-sidebar { width: 280px; background: #f8f9fa; border-right: 1px solid #eee; padding: 30px 20px; display: flex; flex-direction: column; gap: 8px; }
+        .tab-btn { padding: 15px; border: none; border-radius: 15px; text-align: left; cursor: pointer; background: none; font-weight: bold; color: #666; display: flex; align-items: center; gap: 12px; font-family: 'Sarabun', sans-serif; }
+        .tab-btn.active { background: var(--c5); color: white; }
+        
+        .btn-payment-action { 
+            margin-top: 20px; padding: 15px; border-radius: 15px; border: none; 
+            font-weight: bold; cursor: pointer; font-size: 15px; 
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: 0.3s; font-family: 'Sarabun', sans-serif;
+        }
+        .btn-pay-confirm { background: var(--success); color: white; }
+        .btn-pay-cancel { background: #666; color: white; }
+
+        .modal-body { flex: 1; padding: 30px; overflow-y: auto; background: #f0f2f5; }
+        .pane { display: none; }
+        .pane.active { display: block; animation: fadeIn 0.3s; }
+
+        .rounded-box { background: white; border-radius: 30px; padding: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #eef; }
+        .meter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 10px; }
+        .meter-card { background: #ffffff; padding: 25px; border-radius: 25px; border: 1.5px solid #f0f0f0; }
+        .meter-card label { display: block; font-weight: bold; font-size: 15px; margin-bottom: 20px; color: #444; }
+        .input-pill { width: 100%; padding: 14px; border-radius: 15px; border: 2px solid #edf2f7; font-size: 16px; font-weight: bold; outline: none; box-sizing: border-box; background: #f8fafc; margin-bottom: 10px; font-family: 'Sarabun', sans-serif; }
+
+        /* ---------------------------------------------------------
+           INVOICE STYLE (ซ่อนจากหน้าจอปกติ)
+        --------------------------------------------------------- */
+        #print-area { display: none; } /* ซ่อนส่วนนี้จากหน้าจอ */
+
+        .invoice-print-container {
+            width: 210mm; height: 148mm; padding: 10mm 15mm; box-sizing: border-box; 
+            background: white; position: relative; color: black; font-family: 'Sarabun', sans-serif;
+            border: 1px solid #000; margin: 0 auto; line-height: 1.3; overflow: hidden; display: block;
+        }
+        .inv-header { text-align: center; position: relative; margin-bottom: 5px; }
+        .inv-apt-name { font-size: 20px; font-weight: bold; margin: 0; }
+        .inv-apt-addr { font-size: 11.5px; margin: 0; }
+        .inv-room-no-big { position: absolute; top: -2mm; right: -2mm; font-size: 34px; font-weight: bold; }
+        .inv-subject-text { text-align: center; font-size: 19px; text-decoration: underline; font-weight: bold; margin-top: 25px; margin-bottom: 10px; }
+        .inv-table-header { width: 100%; border: 1.5px solid #000; border-collapse: collapse; }
+        .inv-table-header td { border: 1.5px solid #000; padding: 6px 12px; font-size: 14px; vertical-align: top; }
+        .inv-main-table { width: 100%; border: 1.5px solid #000; border-collapse: collapse; border-top: none; }
+        .inv-main-table th { border: 1.5px solid #000; padding: 5px; font-size: 12px; background: #f2f2f2 !important; text-align: center; -webkit-print-color-adjust: exact; }
+        .inv-main-table td { border: 1.5px solid #000; padding: 4px 8px; font-size: 13.5px; vertical-align: middle; height: 23px; }
+        .inv-footer-table { width: 100%; border: 1.5px solid #000; border-collapse: collapse; border-top: none; }
+        .inv-footer-table td { padding: 6px 12px; border: 1.5px solid #000; font-size: 13.5px; font-weight: bold; }
+        .inv-note { font-size: 11px; margin-top: 8px; line-height: 1.4; }
+        .inv-sign { margin-top: 15px; text-align: right; padding-right: 50px; font-size: 14.5px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media print {
+            @page { size: A5 landscape; margin: 0; }
+            html, body { margin: 0 !important; padding: 0 !important; background: white; visibility: hidden; }
+            #print-area { visibility: visible; display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
+            #print-area * { visibility: visible; }
+            .invoice-print-container { border: none !important; page-break-after: always; margin: 0; padding: 10mm 15mm; }
+            .container, #billing-admin-page, #modalOverlay, #excelPreviewOverlay, .card, button { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- พื้นที่เก็บใบแจ้งหนี้ (ถูกซ่อนไว้ใน CSS ด้วย display: none) -->
+<div id="print-area"></div>
+
+<div class="container">
+    <div class="header-brand">
+        <h1><i class="fas fa-calendar-check"></i> เลือกรอบบิล</h1>
+    </div>
+
+    <section id="billing-admin-page">
+        <div class="card">
+            <div class="billing-grid">
+                <div>
+                    <h3><i class="fas fa-cog"></i> ตั้งค่าและเลือกรอบบิล</h3>
+                    <div class="config-box">
+                        <div class="input-group" style="grid-column: span 2;">
+                            <label>📅 เลือกรอบเดือนที่ดำเนินการ</label>
+                            <select id="billMonthSelect" onchange="syncAllUI()"></select>
+                        </div>
+                        <div class="input-group"><label>🏢 ค่าเช่าห้อง</label><input type="number" id="cfgRent" value="2600" oninput="syncAllUI()"></div>
+                        <div class="input-group"><label>💧 ค่าน้ำ (บาท/หน่วย)</label><input type="number" id="cfgWater" value="19" oninput="syncAllUI()"></div>
+                        <div class="input-group"><label>⚡ ค่าไฟ (บาท/หน่วย)</label><input type="number" id="cfgElec" value="7" oninput="syncAllUI()"></div>
+                        <div class="input-group"><label>🌐 อินเทอร์เน็ต</label><input type="number" id="cfgNet" value="200" oninput="syncAllUI()"></div>
+                        <div class="input-group"><label>🧹 ส่วนกลาง</label><input type="number" id="cfgSvc" value="500" oninput="syncAllUI()"></div>
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <div>
+                        <h4 style="margin:0 0 10px 0; color:var(--c5); border-bottom: 1px solid var(--c4); padding-bottom: 5px;">
+                            สรุปยอดเบื้องต้น (<span class="show-month">...</span>)
+                        </h4>
+                        <div class="price-row"><span>ค่าเช่าห้อง:</span><b id="vRent">0</b></div>
+                        <div class="price-row"><span>ค่าน้ำ (/หน่วย):</span><b id="vWater">0</b></div>
+                        <div class="price-row"><span>ค่าไฟ (/หน่วย):</span><b id="vElec">0</b></div>
+                        <div class="price-row"><span>อินเทอร์เน็ต:</span><b id="vNet">0</b></div>
+                        <div class="price-row"><span>ส่วนกลาง:</span><b id="vSvc">0</b></div>
+                        <div class="total-row">฿ <span id="vTotalFixed">0</span></div>
+                    </div>
+                    <button class="btn-issue" onclick="issueAllRoomsNow()"><i class="fas fa-rocket"></i> ออกบิล (รวม 50 ห้อง)</button>
+                    <button class="btn-excel" onclick="openExcelPreview()"><i class="fas fa-table"></i> ตรวจสอบข้อมูล (Excel)</button>
+                    <button class="btn-print-all" id="printAllBtn" onclick="window.print()"><i class="fas fa-print"></i> พิมพ์ใบแจ้งหนี้ทั้งหมด (PDF)</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
+                <h3><i class="fas fa-list-ul"></i> รายชื่อห้องพักและสถานะ</h3>
+                <div class="filter-bar">
+                    <button class="filter-btn active" onclick="setFloor('all')" id="fBtnAll">ทุกชั้น</button>
+                    <button class="filter-btn" onclick="setFloor(1)" id="fBtn1">ชั้น 1</button>
+                    <button class="filter-btn" onclick="setFloor(2)" id="fBtn2">ชั้น 2</button>
+                    <button class="filter-btn" onclick="setFloor(3)" id="fBtn3">ชั้น 3</button>
+                    <button class="filter-btn" onclick="setFloor(4)" id="fBtn4">ชั้น 4</button>
+                    <button class="filter-btn" onclick="setFloor(5)" id="fBtn5">ชั้น 5</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr><th>เลขห้อง</th><th>ผู้เช่า</th><th>น้ำ (หน่วย)</th><th>ไฟ (หน่วย)</th><th>ยอดสุทธิ</th><th>สถานะ</th><th>จัดการ</th></tr>
+                    </thead>
+                    <tbody id="billingTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Modal จัดการรายห้อง -->
+<div id="modalOverlay">
+    <div class="modal-card">
+        <div class="modal-sidebar">
+            <h2 id="mRoomId" style="font-size: 40px; margin:0">---</h2>
+            <p id="mTenant" style="font-size:14px; color:#888;">---</p>
+            
+            <button class="tab-btn active" id="tabBtn1" onclick="changePane('pane1')"><i class="fas fa-file-invoice"></i> พรีวิวใบแจ้งหนี้</button>
+            <button class="tab-btn" id="tabBtn2" onclick="changePane('pane2')"><i class="fas fa-plus-circle"></i> รายการพิเศษ</button>
+            <button class="tab-btn" id="tabBtn3" onclick="changePane('pane3')"><i class="fas fa-tachometer-alt"></i> แก้ไขมิเตอร์</button>
+
+            <button id="paymentBtn" class="btn-payment-action" onclick="togglePaymentStatus()">
+                <i class="fas fa-check-circle"></i> ยืนยันการชำระ (เงินสด)
+            </button>
+
+            <button onclick="closeModal()" style="margin-top:auto; padding:12px; border-radius:15px; border:none; background:#eee; cursor:pointer; font-weight:bold; color:#666; font-family: 'Sarabun', sans-serif;">ปิดหน้าต่างนี้</button>
+        </div>
+        <div class="modal-body">
+            <div id="pane1" class="pane active">
+                <div id="singlePreviewArea" style="transform: scale(0.85); transform-origin: top center;"></div>
+            </div>
+            <div id="pane2" class="pane">
+                <div class="rounded-box">
+                    <h3>➕ เพิ่มรายการพิเศษ (ส่วนลด/ค่าปรับ/อื่นๆ)</h3>
+                    <input type="text" id="exName" placeholder="รายการ เช่น ค่าที่จอดรถ" class="input-pill">
+                    <input type="number" id="exVal" placeholder="จำนวนเงิน" class="input-pill">
+                    <button class="btn-issue" onclick="handleAddExtra()">เพิ่มรายการลงในบิล</button>
+                </div>
+            </div>
+            <div id="pane3" class="pane">
+                <div class="rounded-box">
+                    <h3>📟 แก้ไขเลขหน่วยมิเตอร์</h3>
+                    <div class="meter-grid">
+                        <div class="meter-card">
+                            <label><i class="fas fa-bolt" style="color:#fbc02d"></i> ไฟฟ้า (จดใหม่)</label>
+                            <input type="number" id="edE1" placeholder="เลขเก่า" class="input-pill" style="border-style:dashed;">
+                            <input type="number" id="edE2" placeholder="เลขใหม่" class="input-pill">
+                        </div>
+                        <div class="meter-card">
+                            <label><i class="fas fa-tint" style="color:#03a9f4"></i> น้ำประปา (จดใหม่)</label>
+                            <input type="number" id="edW1" placeholder="เลขเก่า" class="input-pill" style="border-style:dashed;">
+                            <input type="number" id="edW2" placeholder="เลขใหม่" class="input-pill">
+                        </div>
+                    </div>
+                    <button class="btn-issue" style="margin-top:25px; background:var(--c5)" onclick="handleSaveMeter()">💾 บันทึกการแก้ไข</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal ตาราง Excel -->
+<div id="excelPreviewOverlay">
+    <div class="excel-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2 style="margin:0;"><i class="fas fa-table" style="color:var(--excel)"></i> ตารางเช็คยอดบิลประจำเดือน <span class="show-month">...</span></h2>
+            <button onclick="document.getElementById('excelPreviewOverlay').style.display='none'" style="padding:10px 25px; border-radius:10px; cursor:pointer; font-weight:bold; font-family: 'Sarabun', sans-serif;">ปิดหน้าต่าง</button>
+        </div>
+        <div class="excel-table-container">
+            <table class="excel-table">
+                <thead>
+                    <tr><th>ชั้น</th><th>เลขห้อง</th><th>ชื่อผู้เช่า</th><th>ค่าเช่า</th><th>น้ำ(หน่วย)</th><th>ค่าน้ำ</th><th>ไฟ(หน่วย)</th><th>ค่าไฟ</th><th>อื่นๆ</th><th>รวมสุทธิ</th></tr>
+                </thead>
+                <tbody id="excelTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+    let rooms = [];
+    let currentFloorFilter = 'all';
+    let activeId = null;
+
+    function thaiBaht(Number) {
+        Number = Number.toFixed(2).split(".");
+        const txtNum = ['ศูนย์','หนึ่ง','สอง','สาม','สี่','ห้า','หก','เจ็ด','แปด','เก้า'];
+        const txtWeight = ['','สิบ','ร้อย','พัน','หมื่น','แสน','ล้าน'];
+        let res = "";
+        if(Number[0].length > 7) return "จำนวนเงินสูงเกินไป";
+        for(let i=0; i<Number[0].length; i++) {
+            let n = Number[0].charAt(i);
+            if(n != 0) {
+                if(i == (Number[0].length-1) && n == 1 && Number[0].length > 1) res += "เอ็ด";
+                else if(i == (Number[0].length-2) && n == 2) res += "ยี่สิบ";
+                else if(i == (Number[0].length-2) && n == 1) res += "สิบ";
+                else res += txtNum[n] + txtWeight[Number[0].length - i - 1];
+            }
+        }
+        res += "บาทถ้วน";
+        return res;
+    }
+
+    function init() {
+        rooms = [];
+        for(let f=1; f<=5; f++) {
+            for(let r=1; r<=10; r++) {
+                let id = f * 100 + r; 
+                rooms.push({
+                    id: id, floor: f, tenant: "คุณประเสริฐ สิริกวินวงศ์",
+                    addr: "23/55 หมู่ 9 ต.บางโตนด อ.เมือง จ.บุรีรัมย์",
+                    e1: 5743, e2: 5850 + Math.floor(Math.random()*100), 
+                    w1: 699, w2: 710 + Math.floor(Math.random()*15),
+                    extras: [], isPaid: false
+                });
+            }
+        }
+        setupMonths(); syncAllUI();
+    }
+
+    function setupMonths() {
+        const sel = document.getElementById('billMonthSelect');
+        const now = new Date();
+        for(let i=-1; i<=2; i++) {
+            let d = new Date(now.getFullYear(), now.getMonth()+i, 1);
+            let txt = `${thaiMonths[d.getMonth()]} ${d.getFullYear()+543}`;
+            let opt = document.createElement('option');
+            opt.value = txt; opt.text = txt;
+            if(i===0) opt.selected = true;
+            sel.appendChild(opt);
+        }
+    }
+
+    function syncAllUI() {
+        const month = document.getElementById('billMonthSelect').value;
+        document.querySelectorAll('.show-month').forEach(el => el.innerText = month);
+        const r = parseInt(document.getElementById('cfgRent').value) || 0;
+        const w = parseInt(document.getElementById('cfgWater').value) || 0;
+        const e = parseInt(document.getElementById('cfgElec').value) || 0;
+        const n = parseInt(document.getElementById('cfgNet').value) || 0;
+        const s = parseInt(document.getElementById('cfgSvc').value) || 0;
+        document.getElementById('vRent').innerText = r.toLocaleString();
+        document.getElementById('vWater').innerText = w.toLocaleString();
+        document.getElementById('vElec').innerText = e.toLocaleString();
+        document.getElementById('vNet').innerText = n.toLocaleString();
+        document.getElementById('vSvc').innerText = s.toLocaleString();
+        document.getElementById('vTotalFixed').innerText = (r + n + s).toLocaleString();
+        renderTable();
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('billingTableBody');
+        tbody.innerHTML = '';
+        const wR = parseInt(document.getElementById('cfgWater').value) || 0, eR = parseInt(document.getElementById('cfgElec').value) || 0;
+        const fixed = (parseInt(document.getElementById('cfgRent').value) || 0) + (parseInt(document.getElementById('cfgNet').value) || 0) + (parseInt(document.getElementById('cfgSvc').value) || 0);
+        const filtered = currentFloorFilter === 'all' ? rooms : rooms.filter(rm => rm.floor == currentFloorFilter);
+        let lastFloor = 0;
+        filtered.forEach(room => {
+            if (room.floor !== lastFloor) {
+                lastFloor = room.floor;
+                tbody.innerHTML += `<tr><td colspan="7" class="floor-header">🏢 ชั้นที่ ${lastFloor}</td></tr>`;
+            }
+            const total = fixed + (room.w2-room.w1)*wR + (room.e2-room.e1)*eR + room.extras.reduce((s,i)=>s+i.val, 0);
+            
+            const statusHtml = room.isPaid 
+                ? `<span class="status-badge status-paid"><i class="fas fa-check"></i> ชำระแล้ว</span>`
+                : `<span class="status-badge status-unpaid">รอชำระ</span>`;
+
+            tbody.innerHTML += `<tr><td><b>${room.id}</b></td><td>${room.tenant}</td><td>${room.w2-room.w1}</td><td>${room.e2-room.e1}</td><td><b>${total.toLocaleString()}</b></td><td>${statusHtml}</td><td><button onclick="openManageRoom(${room.id})" style="background:none; border:none; color:var(--c5); cursor:pointer; font-size:18px;"><i class="fas fa-edit"></i></button></td></tr>`;
+        });
+    }
+
+    function generateInvoiceHTML(r) {
+        const monthYear = document.getElementById('billMonthSelect').value;
+        const rR = parseInt(document.getElementById('cfgRent').value) || 0, wR = parseInt(document.getElementById('cfgWater').value) || 0, eR = parseInt(document.getElementById('cfgElec').value) || 0, nR = parseInt(document.getElementById('cfgNet').value) || 0, sR = parseInt(document.getElementById('cfgSvc').value) || 0;
+        const total = rR + sR + nR + (r.e2-r.e1)*eR + (r.w2-r.w1)*wR + r.extras.reduce((s,i)=>s+i.val, 0);
+
+        return `
+        <div class="invoice-print-container">
+            <div class="inv-header">
+                <p class="inv-apt-name">Cozy Home Apartment</p>
+                <p class="inv-apt-addr">เลขที่ 123/45 ถนนสายหลัก ต.ในเมือง อ.เมือง จ.บุรีรัมย์</p>
+                <div class="inv-room-no-big">${r.id}</div>
+            </div>
+            <div class="inv-subject-text">ใบแจ้งหนี้</div>
+            <table class="inv-table-header">
+                <tr><td width="65%">ชื่อผู้เช่า Name: &nbsp;&nbsp;&nbsp; <b>${r.tenant}</b><br><br>ที่อยู่ Address: &nbsp;&nbsp;&nbsp; ${r.addr}</td><td>เลขที่ No. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; INV-${r.id}<br><hr>วันที่ Date &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 01/${monthYear}</td></tr>
+            </table>
+            <table class="inv-main-table">
+                <thead><tr><th width="8%">ลำดับ</th><th width="45%">รายการ</th><th width="12%">จำนวน</th><th width="15%">ราคาต่อหน่วย</th><th width="20%">จำนวนเงิน</th></tr></thead>
+                <tbody>
+                    <tr><td align="center">1</td><td>ค่าไฟ ( ${r.e1} - ${r.e2} )</td><td align="center">${r.e2-r.e1}</td><td align="right">${eR.toFixed(2)}</td><td align="right">${((r.e2-r.e1)*eR).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+                    <tr><td align="center">2</td><td>ค่าน้ำ ( ${r.w1} - ${r.w2} )</td><td align="center">${r.w2-r.w1}</td><td align="right">${wR.toFixed(2)}</td><td align="right">${((r.w2-r.w1)*wR).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+                    <tr><td align="center">3</td><td>ค่าเช่าห้องพัก ประจำเดือน ${monthYear.split(' ')[0]}</td><td align="center">1</td><td align="right">${rR.toFixed(2)}</td><td align="right">${rR.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+                    <tr><td align="center">4</td><td>ค่าอินเทอร์เน็ต + ค่าส่วนกลาง</td><td align="center">1</td><td align="right">${(nR+sR).toFixed(2)}</td><td align="right">${(nR+sR).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+                    ${r.extras.map((ex, idx) => `<tr><td align="center">${idx+5}</td><td>${ex.name}</td><td align="center">1</td><td align="right">${ex.val.toFixed(2)}</td><td align="right">${ex.val.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`).join('')}
+                </tbody>
+            </table>
+            <table class="inv-footer-table">
+                <tr><td width="70%" align="center">(${thaiBaht(total)})</td><td width="30%" align="right">รวมสุทธิ: &nbsp;&nbsp; <b>${total.toLocaleString(undefined,{minimumFractionDigits:2})}</b></td></tr>
+            </table>
+            <div class="inv-note">
+                <b>หมายเหตุ:</b> 1. กรุณาชำระเงินโดยการโอนเข้าบัญชีและแจ้งสลิปผ่านทาง LINE Official ของหอพัก<br>
+                &nbsp;&nbsp;&nbsp;&nbsp; 2. กำหนดชำระไม่เกินวันที่ 5 ของเดือน หากเกินกำหนดจะมีค่าปรับวันละ 50 บาท
+            </div>
+            <div class="inv-sign">ลงชื่อ ______________________________ ผู้รับเงิน</div>
+        </div>`;
+    }
+
+    function togglePaymentStatus() {
+        const r = rooms.find(rm => rm.id == activeId);
+        r.isPaid = !r.isPaid;
+        updatePaymentButtonUI(r.isPaid);
+        renderTable();
+        if(r.isPaid) alert(`ยืนยันการรับชำระเงิน ห้อง ${r.id} เรียบร้อยแล้ว`);
+    }
+
+    function updatePaymentButtonUI(isPaid) {
+        const btn = document.getElementById('paymentBtn');
+        if(isPaid) {
+            btn.innerHTML = `<i class="fas fa-undo"></i> ยกเลิกการรับเงิน (เปลี่ยนสถานะ)`;
+            btn.className = "btn-payment-action btn-pay-cancel";
+        } else {
+            btn.innerHTML = `<i class="fas fa-check-circle"></i> ยืนยันการชำระ (เงินสด)`;
+            btn.className = "btn-payment-action btn-pay-confirm";
+        }
+    }
+
+    function openManageRoom(id) {
+        activeId = id; const r = rooms.find(rm => rm.id == id);
+        document.getElementById('mRoomId').innerText = r.id;
+        document.getElementById('mTenant').innerText = "ผู้เช่า: " + r.tenant;
+        document.getElementById('edE1').value = r.e1; document.getElementById('edE2').value = r.e2;
+        document.getElementById('edW1').value = r.w1; document.getElementById('edW2').value = r.w2;
+        updatePaymentButtonUI(r.isPaid);
+        refreshModal(); 
+        document.getElementById('modalOverlay').style.display = 'flex';
+    }
+
+    // แก้ไขฟังก์ชันนี้: ไม่ต้องโชว์บิลบนหน้าจอ
+    function issueAllRoomsNow() {
+        const area = document.getElementById('print-area'); 
+        area.innerHTML = ''; // เคลียร์ข้อมูลเก่า
+        rooms.forEach(r => area.innerHTML += generateInvoiceHTML(r)); // ใส่ข้อมูลใหม่ในส่วนที่ซ่อนอยู่
+        
+        alert('🚀 ออกบิลสำเร็จ! ข้อมูลถูกเตรียมไว้สำหรับพิมพ์แล้ว');
+        document.getElementById('printAllBtn').style.display = 'block'; // โชว์ปุ่มพิมพ์
+    }
+
+    function refreshModal() {
+        const r = rooms.find(rm => rm.id == activeId);
+        document.getElementById('singlePreviewArea').innerHTML = generateInvoiceHTML(r);
+    }
+
+    function handleSaveMeter() {
+        const r = rooms.find(rm => rm.id == activeId);
+        r.e1 = parseInt(document.getElementById('edE1').value); r.e2 = parseInt(document.getElementById('edE2').value);
+        r.w1 = parseInt(document.getElementById('edW1').value); r.w2 = parseInt(document.getElementById('edW2').value);
+        refreshModal(); renderTable(); alert('บันทึกหน่วยมิเตอร์แล้ว');
+    }
+
+    function handleAddExtra() {
+        const r = rooms.find(rm => rm.id == activeId);
+        const name = document.getElementById('exName').value, val = parseInt(document.getElementById('exVal').value);
+        if(name && val) { r.extras.push({name, val}); document.getElementById('exName').value = ''; document.getElementById('exVal').value = ''; refreshModal(); renderTable(); }
+    }
+
+    function openExcelPreview() {
+        const tbody = document.getElementById('excelTableBody');
+        tbody.innerHTML = '';
+        const wR = parseInt(document.getElementById('cfgWater').value) || 0, eR = parseInt(document.getElementById('cfgElec').value) || 0, rent = parseInt(document.getElementById('cfgRent').value) || 0;
+        const other = (parseInt(document.getElementById('cfgNet').value) || 0) + (parseInt(document.getElementById('cfgSvc').value) || 0);
+        rooms.forEach(r => {
+            const sum = rent + other + (r.w2-r.w1)*wR + (r.e2-r.e1)*eR + r.extras.reduce((s,i)=>s+i.val, 0);
+            tbody.innerHTML += `<tr><td>${r.floor}</td><td>${r.id}</td><td>${r.tenant}</td><td>${rent}</td><td>${r.w2-r.w1}</td><td>${(r.w2-r.w1)*wR}</td><td>${r.e2-r.e1}</td><td>${(r.e2-r.e1)*eR}</td><td>${other}</td><td><b>${sum.toLocaleString()}</b></td></tr>`;
+        });
+        document.getElementById('excelPreviewOverlay').style.display = 'flex';
+    }
+
+    function setFloor(f) { 
+        currentFloorFilter = f; 
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        if(f === 'all') document.getElementById('fBtnAll').classList.add('active');
+        else document.getElementById('fBtn' + f).classList.add('active');
+        renderTable(); 
+    }
+    
+    function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
+    
+    function changePane(id) {
+        document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        const tabIdx = id.charAt(id.length - 1);
+        document.getElementById('tabBtn' + tabIdx).classList.add('active');
+    }
+
+    init();
+</script>
+</body>
+</html>
