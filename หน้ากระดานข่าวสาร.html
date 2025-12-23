@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>กระดานข่าวสาร</title>
+    <!-- เพิ่มฟอนต์ Sarabun ให้เหมือนระบบพัสดุ -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --c1: #CCD5AE; --c2: #E9EDC9; --c3: #FEFAE0; --c4: #FAEDCD; --c5: #D4A373;
+            --white: #ffffff; --text: #555; --light-text: #888;
+        }
+
+        body { 
+            font-family: 'Sarabun', sans-serif; 
+            background-color: var(--c3); 
+            margin: 0; 
+            padding: 20px; 
+            color: var(--text); 
+        }
+
+        .container { max-width: 700px; margin: auto; }
+
+        /* --- Header: สไตล์เดียวกับระบบพัสดุ --- */
+        .header-brand { text-align: center; margin-bottom: 30px; }
+        .header-brand h1 { color: var(--c5); margin: 0; font-size: 32px; font-weight: 600; }
+
+        /* --- Create Post Trigger --- */
+        .create-trigger {
+            background: var(--white); border-radius: 20px; padding: 15px;
+            display: flex; align-items: center; gap: 12px; margin-bottom: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+        .create-trigger img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--c1); }
+        .trigger-btn {
+            background: #f0f2f5; border-radius: 25px; padding: 10px 20px;
+            flex: 1; color: var(--light-text); cursor: pointer; text-align: left; font-size: 14px;
+        }
+
+        /* --- Post Card Style --- */
+        .post-card { background: var(--white); border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 25px; overflow: hidden; animation: fadeIn 0.5s ease; border: 1px solid rgba(0,0,0,0.02); }
+        .post-header { padding: 15px 20px; display: flex; align-items: center; gap: 12px; }
+        .author-img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid var(--c1); }
+        .author-info { flex: 1; }
+        .author-name { font-weight: bold; font-size: 15px; margin: 0; color: var(--text); }
+        .status-admin { background: var(--c5); color: white; font-size: 10px; padding: 2px 8px; border-radius: 10px; margin-left: 5px; vertical-align: middle; }
+        .post-time { font-size: 11px; color: var(--light-text); margin-top: 2px; }
+
+        .post-content { padding: 0 20px 15px 20px; }
+        .post-title { font-size: 19px; font-weight: bold; color: var(--c5); margin-bottom: 8px; }
+        .post-desc { font-size: 14px; line-height: 1.6; color: var(--text); margin-bottom: 15px; }
+        .post-main-img { width: 100%; border-radius: 12px; display: block; border: 1px solid #eee; }
+
+        .post-footer { padding: 10px 20px; border-top: 1px solid #f9f9f9; display: flex; justify-content: space-between; font-size: 13px; color: var(--light-text); }
+
+        /* --- Comment Section --- */
+        .comment-section { background: #fafafa; border-top: 1px solid #eee; padding: 15px 20px; }
+        .comment-list { margin-bottom: 15px; }
+        .comment-item { display: flex; gap: 10px; margin-bottom: 12px; }
+        .comment-img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+        .comment-bubble { background: var(--white); padding: 10px 14px; border-radius: 15px; border: 1px solid #eee; flex: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .comment-user-info { font-size: 12px; font-weight: bold; display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .status-room { color: var(--c5); font-weight: normal; font-size: 11px; }
+        .comment-text { font-size: 13.5px; margin: 0; color: var(--text); }
+        .comment-time { font-size: 10px; color: #aaa; margin-top: 5px; display: block; }
+
+        /* Comment Input */
+        .comment-input-box { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+        .comment-input-box input { flex: 1; background: #fff; border: 1px solid var(--c5); border-radius: 20px; padding: 10px 15px; outline: none; font-size: 14px; }
+        .btn-send { color: var(--c5); cursor: pointer; font-size: 18px; border: none; background: none; }
+
+        /* --- Post Modal --- */
+        #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        .modal-card { background: white; width: 90%; max-width: 500px; border-radius: 20px; padding: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .modal-card h3 { margin-top: 0; color: var(--c5); text-align: center; }
+        .modal-card input, .modal-card textarea { width: 100%; border: 1px solid #ddd; border-radius: 10px; padding: 12px; margin-bottom: 12px; box-sizing: border-box; font-family: 'Sarabun', sans-serif; font-size: 14px; }
+        .modal-card textarea { height: 100px; resize: none; }
+        
+        .upload-area { border: 2px dashed var(--c1); border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; margin-bottom: 15px; position: relative; color: var(--c5); }
+        #previewImg { width: 100%; max-height: 150px; object-fit: contain; display: none; margin-top: 10px; border-radius: 8px; }
+        
+        .btn-row { display: flex; gap: 10px; }
+        .btn-confirm { flex: 2; background: var(--c5); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; font-family: 'Sarabun', sans-serif; }
+        .btn-cancel { flex: 1; background: #eee; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-family: 'Sarabun', sans-serif; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- ส่วนหัวสไตล์เดียวกับระบบพัสดุ -->
+    <div class="header-brand">
+        <h1><i class="fas fa-bullhorn"></i> กระดานข่าวสาร</h1>
+    </div>
+
+    <!-- ส่วนสร้างโพสต์ -->
+    <div class="create-trigger">
+        <img src="https://i.pravatar.cc/100?u=admin" alt="Admin">
+        <div class="trigger-btn" onclick="openPostModal()">แชร์ข่าวสาร หรือแจ้งประกาศสำคัญที่นี่...</div>
+        <i class="fas fa-image" style="color:var(--c5); font-size: 20px;"></i>
+    </div>
+
+    <!-- พื้นที่แสดง Feed -->
+    <div id="feedArea">
+
+        <!-- โพสต์ที่ 1: ประกาศแจ้งเตือนการปิดปรับปรุง -->
+        <article class="post-card" id="post-renovation">
+            <header class="post-header">
+                <img src="https://i.pravatar.cc/100?u=admin" class="author-img">
+                <div class="author-info">
+                    <p class="author-name">แอดมินสมศรี <span class="status-admin">ผู้จัดการ</span></p>
+                    <p class="post-time">เมื่อสักครู่</p>
+                </div>
+            </header>
+            <div class="post-content">
+                <div class="post-title">🛠️ ประกาศแจ้งเตือนการปิดปรับปรุง</div>
+                <div class="post-desc">
+                    เพื่อทำการซ่อมแซมพื้นที่อาคารและตรวจเช็คความเรียบร้อย ในวันที่ 26 ธ.ค. 68 (เวลา 12.00 - 14.00 น.) ขออภัยลูกบ้านทุกท่านในความไม่สะดวกมา ณ ที่นี้ด้วยนะคะ
+                </div>
+                <img src="3.png" class="post-main-img" alt="ประกาศแจ้งเตือนการปิดปรับปรุง">
+            </div>
+            <div class="post-footer">
+                <span><i class="far fa-eye"></i> 15 คนเห็นแล้ว</span>
+                <span><i class="far fa-comment"></i> คอมเมนต์</span>
+            </div>
+            <div class="comment-section">
+                <div class="comment-list" id="comment-list-renovation"></div>
+                <div class="comment-input-box">
+                    <input type="text" placeholder="เขียนคอมเมนต์..." id="input-renovation">
+                    <button class="btn-send" onclick="submitComment('renovation')"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </article>
+
+        <!-- โพสต์ที่ 2: สวัสดีปีใหม่ 2569 -->
+        <article class="post-card" id="post-newyear">
+            <header class="post-header">
+                <img src="https://i.pravatar.cc/100?u=admin" class="author-img">
+                <div class="author-info">
+                    <p class="author-name">แอดมินสมศรี <span class="status-admin">ผู้จัดการ</span></p>
+                    <p class="post-time">1 ชั่วโมงที่แล้ว</p>
+                </div>
+            </header>
+            <div class="post-content">
+                <div class="post-title">🎊 สวัสดีปีใหม่ 2569 ขับขี่ปลอดภัยไร้อุบัติเหตุ</div>
+                <div class="post-desc">
+                    #เที่ยวปีใหม่อย่างมั่นใจ อย่าลืมคาดเข็มขัดนิรภัย เมาไม่ขับ และเคารพกฎจราจรนะคะ ขอให้ลูกบ้าน Cozy Home ทุกท่านเดินทางท่องเที่ยวและกลับบ้านโดยสวัสดิภาพค่ะ
+                </div>
+                <img src="1.png" class="post-main-img" alt="สวัสดีปีใหม่ 2569">
+            </div>
+            <div class="post-footer">
+                <span><i class="far fa-eye"></i> 92 คนเห็นแล้ว</span>
+                <span><i class="far fa-comment"></i> คอมเมนต์</span>
+            </div>
+            <div class="comment-section">
+                <div class="comment-list" id="comment-list-newyear">
+                    <div class="comment-item">
+                        <img src="https://i.pravatar.cc/100?u=room402" class="comment-img">
+                        <div class="comment-bubble">
+                            <div class="comment-user-info">คุณก้อย <span class="status-room">ห้อง 402</span></div>
+                            <p class="comment-text">สวัสดีปีใหม่ค่ะ ขอบคุณสำหรับคำแนะนำดีๆ ค่ะ</p>
+                            <span class="comment-time">45 นาทีที่แล้ว</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="comment-input-box">
+                    <input type="text" placeholder="เขียนคอมเมนต์..." id="input-newyear">
+                    <button class="btn-send" onclick="submitComment('newyear')"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </article>
+        
+    </div>
+</div>
+
+<!-- Modal สำหรับสร้างโพสต์ -->
+<div id="modalOverlay">
+    <div class="modal-card">
+        <h3>📝 สร้างโพสต์ใหม่</h3>
+        <input type="text" id="postTitle" placeholder="หัวข้อโพสต์...">
+        <textarea id="postDesc" placeholder="รายละเอียดเรื่องที่ต้องการโพสต์..."></textarea>
+        
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <div id="uploadText"><i class="fas fa-camera"></i><br>เพิ่มรูปภาพประกอบ</div>
+            <img id="previewImg">
+            <input type="file" id="fileInput" hidden accept="image/*" onchange="handlePreview(this)">
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-cancel" onclick="closePostModal()">ยกเลิก</button>
+            <button class="btn-confirm" onclick="publishPost()">โพสต์ข่าวสาร</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentImgBase64 = "";
+
+    function openPostModal() { document.getElementById('modalOverlay').style.display = 'flex'; }
+    function closePostModal() { 
+        document.getElementById('modalOverlay').style.display = 'none'; 
+        resetForm();
+    }
+
+    function handlePreview(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentImgBase64 = e.target.result;
+                const img = document.getElementById('previewImg');
+                img.src = currentImgBase64;
+                img.style.display = 'block';
+                document.getElementById('uploadText').style.display = 'none';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('postTitle').value = '';
+        document.getElementById('postDesc').value = '';
+        document.getElementById('fileInput').value = '';
+        document.getElementById('previewImg').style.display = 'none';
+        document.getElementById('uploadText').style.display = 'block';
+        currentImgBase64 = "";
+    }
+
+    function publishPost() {
+        const title = document.getElementById('postTitle').value;
+        const desc = document.getElementById('postDesc').value;
+        if(!title || !desc) return alert("กรุณากรอกหัวข้อและรายละเอียด");
+
+        const postID = Date.now();
+        const feed = document.getElementById('feedArea');
+        
+        const postHTML = `
+            <article class="post-card" id="post-${postID}">
+                <header class="post-header">
+                    <img src="https://i.pravatar.cc/100?u=admin" class="author-img">
+                    <div class="author-info">
+                        <p class="author-name">แอดมิน <span class="status-admin">ผู้จัดการ</span></p>
+                        <p class="post-time">เมื่อสักครู่</p>
+                    </div>
+                </header>
+                <div class="post-content">
+                    <div class="post-title">${title}</div>
+                    <div class="post-desc">${desc}</div>
+                    ${currentImgBase64 ? `<img src="${currentImgBase64}" class="post-main-img">` : ''}
+                </div>
+                <div class="post-footer">
+                    <span><i class="far fa-eye"></i> เห็นแล้ว 1 คน</span>
+                    <span><i class="far fa-comment"></i> คอมเมนต์</span>
+                </div>
+                <div class="comment-section">
+                    <div class="comment-list" id="comment-list-${postID}"></div>
+                    <div class="comment-input-box">
+                        <input type="text" placeholder="เขียนคอมเมนต์..." id="input-${postID}">
+                        <button class="btn-send" onclick="submitComment('${postID}')"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </article>
+        `;
+
+        feed.insertAdjacentHTML('afterbegin', postHTML);
+        closePostModal();
+    }
+
+    function submitComment(postID) {
+        const input = document.getElementById(`input-${postID}`);
+        if(!input.value) return;
+
+        const list = document.getElementById(`comment-list-${postID}`);
+        const commentHTML = `
+            <div class="comment-item" style="animation: fadeIn 0.3s ease;">
+                <img src="https://i.pravatar.cc/100?u=user" class="comment-img">
+                <div class="comment-bubble">
+                    <div class="comment-user-info">คุณผู้เช่า <span class="status-room">ห้อง 101</span></div>
+                    <p class="comment-text">${input.value}</p>
+                    <span class="comment-time">เมื่อสักครู่</span>
+                </div>
+            </div>
+        `;
+        list.insertAdjacentHTML('beforeend', commentHTML);
+        input.value = '';
+    }
+</script>
+
+</body>
+</html>
