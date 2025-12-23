@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports Summary - 5 Pages Fixed All</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{
+ --c1:#CCD5AE; --c2:#E9EDC9; --c3:#FEFAE0; --c4:#FAEDCD; --c5:#D4A373;
+}
+body{ margin:0; background:var(--c3); font-family: 'Segoe UI', Tahoma, sans-serif; padding: 25px; color: #333; }
+
+/* --- UI หน้าจอหลัก --- */
+.card{ background:white; border-radius:24px; padding:30px; box-shadow:0 10px 30px rgba(0,0,0,.05); max-width: 1400px; margin: auto; }
+.report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid var(--c2); padding-bottom: 15px; flex-wrap: wrap; gap: 15px; }
+.report-header h3 { margin: 0; color: var(--c5); font-size: 24px; font-weight: 800; }
+
+.filter-bar { display: flex; gap: 10px; margin-bottom: 25px; align-items: center; background: #f8faf5; padding: 12px; border-radius: 50px; padding-left: 25px; }
+.filter-btn { padding: 10px 22px; border-radius: 30px; border: 1.5px solid var(--c5); background: white; cursor: pointer; font-size: 14px; font-weight: bold; color: var(--c5); transition: 0.3s; }
+.filter-btn.active { background: var(--c5); color: white; }
+
+.table-container { overflow-x: auto; border-radius: 20px; border: 1px solid #f0f0f0; }
+.table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1100px; }
+.table th { background: #fcfdfb; color: #666; padding: 15px 10px; border-bottom: 2px solid #eee; }
+.table td { padding: 14px 10px; border-bottom: 1px solid #f5f5f5; text-align: center; }
+.floor-group-header { background: var(--c2) !important; text-align: left !important; font-weight: 800; padding-left: 25px !important; color: #5d6d4e; }
+
+.btn-print { background: #217346; color: white; border: none; padding: 12px 28px; border-radius: 50px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 10px; transition: 0.3s; box-shadow: 0 4px 15px rgba(33, 115, 70, 0.2); }
+.btn-notify { background: var(--c1); color: #5d6d4e; border: none; padding: 8px 18px; border-radius: 20px; cursor: pointer; font-size: 12px; font-weight: bold; }
+
+/* --- ระบบ Preview (หน้าจอ) --- */
+#excel-preview-mode { 
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: white; z-index: 10000; overflow-y: auto; padding: 40px; 
+}
+.preview-controls { display: flex; gap: 15px; margin-bottom: 30px; border-bottom: 1px solid #ddd; padding-bottom: 20px; }
+.btn-back-rounded { background: #eee; color: #666; border: none; padding: 12px 25px; border-radius: 50px; cursor: pointer; font-weight: bold; }
+.btn-confirm-rounded { background: #217346; color: white; border: none; padding: 12px 35px; border-radius: 50px; cursor: pointer; font-weight: bold; }
+
+.excel-layout { width: 100%; border-collapse: collapse; border: 2.5px solid #000; font-size: 13px; margin-bottom: 20px; }
+.excel-layout th, .excel-layout td { border: 1px solid #000; padding: 8px; text-align: center; color: black; }
+.excel-layout th { background: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
+
+/* --- แก้ไขปัญหาหน้า 1 และระบบพิมพ์ 5 หน้า --- */
+@media print {
+    /* 1. สั่งซ่อนทุกอย่างใน Body ทิ้งทันที (ไม่เหลือพื้นที่ว่าง) */
+    body > *:not(#excel-preview-mode) {
+        display: none !important;
+    }
+
+    /* 2. รีเซ็ต HTML/Body ให้เริ่มที่ขอบกระดาษจริง */
+    html, body {
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+    }
+
+    /* 3. ปรับหน้า Preview ให้เป็นเนื้อหาหลักของกระดาษ */
+    #excel-preview-mode {
+        display: block !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+
+    /* 4. ตั้งค่าหน้ากระดาษแต่ละชั้น */
+    .print-page {
+        display: block !important;
+        width: 100% !important;
+        page-break-after: always !important; /* ตัดหน้าเมื่อจบชั้น */
+        break-after: page !important;
+        padding: 1.5cm !important; /* เว้นขอบในกระดาษแต่ละแผ่น */
+        box-sizing: border-box !important;
+    }
+
+    .preview-controls, .btn-notify { display: none !important; }
+    
+    @page { 
+        size: A4 landscape; 
+        margin: 0; /* ควบคุม margin ผ่าน .print-page แทนเพื่อความแม่นยำ */
+    }
+}
+</style>
+</head>
+<body>
+
+<section id="reports">
+    <div class="card">
+        <div class="report-header">
+            <h3>📑 รายงานสรุปการรับชำระเงิน (รวม 50 ห้อง)</h3>
+            <button onclick="showExcelPreview()" class="btn-print">
+                <span>🖨️</span> พิมพ์แยกชั้น (5 หน้า PDF)
+            </button>
+        </div>
+
+        <div class="filter-bar">
+            <span style="font-weight:bold; font-size:15px; color:#888; margin-right:10px;">กรองหน้าจอ:</span>
+            <button class="filter-btn active" onclick="filterReport('all', this)">ทั้งหมด</button>
+            <button class="filter-btn" onclick="filterReport(1, this)">ชั้น 1</button>
+            <button class="filter-btn" onclick="filterReport(2, this)">ชั้น 2</button>
+            <button class="filter-btn" onclick="filterReport(3, this)">ชั้น 3</button>
+            <button class="filter-btn" onclick="filterReport(4, this)">ชั้น 4</button>
+            <button class="filter-btn" onclick="filterReport(5, this)">ชั้น 5</button>
+        </div>
+
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ห้อง</th><th>เลขที่ใบเสร็จ</th><th>ผู้เช่าหลัก</th><th>วันที่ชำระ</th><th>ช่องทาง</th><th>ค่าเช่า</th><th>น้ำ</th><th>ไฟ</th><th>อื่น ๆ</th><th style="background:#f9fbf2;">รวมสุทธิ</th><th>แจ้งเตือน</th>
+                    </tr>
+                </thead>
+                <tbody id="reportTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<div id="excel-preview-mode">
+    <div class="preview-controls">
+        <button onclick="closeExcelPreview()" class="btn-back-rounded">⬅️ กลับหน้าหลัก</button>
+        <button onclick="window.print()" class="btn-confirm-rounded">🖨️ ยืนยันพิมพ์ 5 หน้ากระดาษ</button>
+    </div>
+    <div id="print-area-content"></div>
+</div>
+
+<script>
+const reportData = [];
+const names = ["สมชาย", "มินตรา", "กฤษฎา", "วิภาวี", "ธนาวัสส์", "อารีรัตน์", "นพดล", "พัชรา", "จิรายุ", "สิรินธร"];
+
+for (let f = 1; f <= 5; f++) {
+    for (let r = 1; r <= 10; r++) {
+        const roomId = f * 100 + r;
+        const water = Math.floor(Math.random() * 100) + 120;
+        const elec = Math.floor(Math.random() * 400) + 350;
+        reportData.push({
+            id: roomId, floor: f, recId: `REC6812-${roomId}`,
+            name: `คุณ${names[r-1]} ใจดี`,
+            date: `21/12/2568`,
+            type: "โอนเงิน", rent: 4500, water: water, electric: elec, other: 300
+        });
+    }
+}
+
+function renderReport() {
+    const tbody = document.getElementById('reportTableBody');
+    tbody.innerHTML = '';
+    let currentFloor = 0;
+    reportData.forEach((item) => {
+        if (item.floor !== currentFloor) {
+            currentFloor = item.floor;
+            tbody.innerHTML += `<tr data-floor="${currentFloor}"><td colspan="11" class="floor-group-header">🏢 ชั้นที่ ${currentFloor}</td></tr>`;
+        }
+        const total = item.rent + item.water + item.electric + item.other;
+        tbody.innerHTML += `
+            <tr data-floor="${item.floor}">
+                <td><b>${item.id}</b></td><td>${item.recId}</td><td>${item.name}</td><td>${item.date}</td>
+                <td>${item.type}</td><td>${item.rent.toLocaleString()}</td><td>${item.water}</td><td>${item.electric}</td><td>${item.other}</td>
+                <td style="font-weight:bold; color:#588157; background:#f9fbf2;">${total.toLocaleString()}</td>
+                <td><button class="btn-notify" onclick="alert('ส่งแล้ว')">🔔 แจ้ง</button></td>
+            </tr>`;
+    });
+}
+
+function filterReport(f, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('#reportTableBody tr').forEach(row => {
+        const rowFloor = row.getAttribute('data-floor');
+        row.style.display = (f === 'all' || rowFloor == f) ? '' : 'none';
+    });
+}
+
+function showExcelPreview() {
+    const printArea = document.getElementById('print-area-content');
+    printArea.innerHTML = '';
+    for(let f=1; f<=5; f++) {
+        const floorRooms = reportData.filter(item => item.floor === f);
+        const pageDiv = document.createElement('div');
+        pageDiv.className = 'print-page';
+        let totalF = 0;
+        let html = `
+            <div style="text-align:center; margin-bottom:20px;">
+                <h2 style="margin:0;">Cozy Home Apartment - รายงานสรุปรายรับ</h2>
+                <h3 style="margin:5px 0;">ชั้นที่ ${f} | ประจำรอบเดือน ธันวาคม พ.ศ. 2568</h3>
+            </div>
+            <table class="excel-layout">
+                <thead><tr><th>ห้อง</th><th>เลขที่ใบเสร็จ</th><th>ชื่อผู้เช่า</th><th>วันที่</th><th>ค่าเช่า</th><th>น้ำ</th><th>ไฟ</th><th>อื่นๆ</th><th>รวมสุทธิ</th></tr></thead>
+                <tbody>`;
+        floorRooms.forEach(item => {
+            const sum = item.rent + item.water + item.electric + item.other;
+            totalF += sum;
+            html += `<tr><td>${item.id}</td><td>${item.recId}</td><td>${item.name}</td><td>${item.date}</td><td>${item.rent}</td><td>${item.water}</td><td>${item.electric}</td><td>${item.other}</td><td style="font-weight:bold;">${sum.toLocaleString()}</td></tr>`;
+        });
+        html += `<tr style="font-weight:bold; background:#f2f2f2;"><td colspan="8" style="text-align:right;">รวมยอดเงินชั้นที่ ${f}</td><td>${totalF.toLocaleString()}</td></tr></tbody></table>
+            <div style="display:flex; justify-content:space-between; margin-top:30px; font-weight:bold;">
+                <p>เจ้าหน้าที่ผู้ตรวจสอบ: ................................</p>
+                <p>วันที่พิมพ์: ${new Date().toLocaleDateString('th-TH')}</p>
+            </div>`;
+        pageDiv.innerHTML = html;
+        printArea.appendChild(pageDiv);
+    }
+    document.getElementById('excel-preview-mode').style.display = 'block';
+}
+
+function closeExcelPreview() { document.getElementById('excel-preview-mode').style.display = 'none'; }
+
+renderReport();
+</script>
+</body>
+</html>
