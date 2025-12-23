@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการงานแจ้งซ่อม - Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --c1: #CCD5AE; --c2: #E9EDC9; --c3: #FEFAE0; --c4: #FAEDCD; --c5: #D4A373;
+            --text: #555; --pending: #e67e22; --processing: #3498db; --completed: #27ae60; --urgent: #e74c3c;
+            --notify: #5d6d4e;
+        }
+
+        body { font-family: 'Sarabun', sans-serif; background: var(--c3); padding: 20px; color: var(--text); margin: 0; }
+        .container { max-width: 1100px; margin: auto; }
+
+        /* Header */
+        .header-brand { text-align: center; margin-bottom: 30px; }
+        .header-brand h1 { color: var(--c5); margin: 0; font-size: 32px; font-weight: 600; }
+
+        /* Stats Bar */
+        .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-item { background: white; padding: 20px; border-radius: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-bottom: 4px solid #ddd; }
+        .stat-item div { font-size: 28px; font-weight: bold; margin-top: 5px; }
+        .stat-item.st-total { border-color: var(--c5); }
+        .stat-item.st-pending { border-color: var(--pending); color: var(--pending); }
+        .stat-item.st-processing { border-color: var(--processing); color: var(--processing); }
+        .stat-item.st-done { border-color: var(--completed); color: var(--completed); }
+
+        /* Main Card & Filters */
+        .main-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,.05); }
+        .filter-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .search-box { flex: 1; min-width: 250px; position: relative; }
+        .search-box input { width: 100%; padding: 12px 15px 12px 40px; border-radius: 12px; border: 1px solid var(--c5); outline: none; box-sizing: border-box; font-family: 'Sarabun'; }
+        .search-box i { position: absolute; left: 15px; top: 15px; color: var(--c5); }
+
+        .btn-f { padding: 8px 15px; border-radius: 20px; border: 1px solid var(--c5); background: white; cursor: pointer; font-size: 13px; font-weight: bold; color: var(--c5); }
+        .btn-f.active { background: var(--c5); color: white; }
+
+        /* Table Style */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: var(--c2); padding: 15px; font-size: 14px; text-align: center; }
+        td { padding: 15px; border-bottom: 1px solid #eee; text-align: center; font-size: 14px; }
+        
+        /* Badges */
+        .badge { padding: 5px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; display: inline-block; }
+        .bg-pending { background: var(--pending); }
+        .bg-processing { background: var(--processing); }
+        .bg-completed { background: var(--completed); }
+        .bg-urgent { background: var(--urgent); animation: pulse 1.5s infinite; }
+        
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+
+        /* Buttons */
+        .btn-manage { background: var(--c2); border: none; padding: 8px 12px; border-radius: 10px; cursor: pointer; color: var(--text); font-weight: bold; font-family: 'Sarabun'; transition: 0.3s; }
+        .btn-manage:hover { background: var(--c1); }
+        
+        .btn-notify-row { background: var(--c4); border: none; padding: 8px 12px; border-radius: 10px; cursor: pointer; color: #856404; font-weight: bold; font-size: 12px; margin-left: 5px; transition: 0.3s; }
+        .btn-notify-row:hover { background: #ffeeba; transform: scale(1.05); }
+
+        /* Modal Detail */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .modal-content { background: white; margin: 5% auto; padding: 25px; border-radius: 25px; width: 90%; max-width: 600px; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .close-btn { position: absolute; right: 20px; top: 20px; cursor: pointer; font-size: 24px; color: #ccc; }
+        
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .detail-item b { display: block; font-size: 12px; color: var(--c5); }
+        .detail-item span { font-size: 16px; font-weight: 600; }
+        
+        .repair-img { width: 100%; border-radius: 15px; margin-top: 15px; border: 1px solid #eee; max-height: 200px; object-fit: cover; }
+        
+        /* Modal Actions */
+        .action-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
+        .action-box { padding: 15px; background: #f9f9f9; border-radius: 15px; border: 1px solid #eee; }
+        .action-box h4 { margin: 0 0 10px 0; font-size: 14px; color: var(--text); }
+        
+        .status-changer select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Sarabun'; outline: none; margin-bottom: 10px; }
+        .btn-update { width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--completed); color: white; font-weight: bold; cursor: pointer; }
+        
+        .notify-box input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Sarabun'; outline: none; margin-bottom: 10px; box-sizing: border-box; font-size: 13px; }
+        .btn-send-notify { width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--processing); color: white; font-weight: bold; cursor: pointer; }
+
+        @media (max-width: 768px) {
+            .stats-bar { grid-template-columns: 1fr 1fr; }
+            .action-sections { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-brand">
+        <h1><i class="fas fa-tools"></i> ระบบจัดการงานแจ้งซ่อม</h1>
+    </div>
+
+    <!-- Stats Dashboard -->
+    <div class="stats-bar">
+        <div class="stat-item st-total"><span>งานทั้งหมด</span><div id="countTotal">0</div></div>
+        <div class="stat-item st-pending"><span>รอดำเนินการ</span><div id="countPending">0</div></div>
+        <div class="stat-item st-processing"><span>กำลังซ่อม</span><div id="countProcessing">0</div></div>
+        <div class="stat-item st-done"><span>เสร็จสิ้น</span><div id="countDone">0</div></div>
+    </div>
+
+    <div class="main-card">
+        <div class="filter-controls">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="ค้นหาเลขห้อง หรือปัญหา..." onkeyup="filterData()">
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-f active" onclick="filterStatus('all', this)">ทั้งหมด</button>
+                <button class="btn-f" onclick="filterStatus('pending', this)">รอดำเนินการ</button>
+                <button class="btn-f" onclick="filterStatus('processing', this)">กำลังซ่อม</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>เลขห้อง</th>
+                        <th>หัวข้อปัญหา</th>
+                        <th>สถานะ</th>
+                        <th>วันที่แจ้ง</th>
+                        <th>แจ้งเตือน</th>
+                        <th>จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody id="repairTableBody">
+                    <!-- Data rows -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal รายละเอียดและจัดการ -->
+<div id="repairModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h2 style="margin:0; color:var(--c5); font-size: 20px;"><i class="fas fa-edit"></i> จัดการงานแจ้งซ่อม</h2>
+        
+        <div class="detail-grid">
+            <div class="detail-item"><b>หมายเลขห้อง</b><span id="mRoom"></span></div>
+            <div class="detail-item"><b>สถานะปัจจุบัน</b><span id="mStatusText"></span></div>
+            <div class="detail-item" style="grid-column: span 2;"><b>ปัญหา:</b> <span id="mTitle" style="color:#444;"></span></div>
+        </div>
+
+        <img id="mImg" src="" class="repair-img" alt="Repair Photo">
+
+        <div class="action-sections">
+            <!-- ส่วนเปลี่ยนสถานะ -->
+            <div class="action-box status-changer">
+                <h4><i class="fas fa-sync-alt"></i> อัปเดตสถานะ</h4>
+                <select id="statusSelect">
+                    <option value="pending">รอดำเนินการ</option>
+                    <option value="processing">กำลังดำเนินการซ่อม</option>
+                    <option value="completed">ซ่อมเสร็จสิ้น</option>
+                </select>
+                <button class="btn-update" onclick="updateStatus()">บันทึกสถานะ</button>
+            </div>
+
+            <!-- ส่วนส่งแจ้งเตือนพิเศษ -->
+            <div class="action-box notify-box">
+                <h4><i class="fas fa-comment-dots"></i> แจ้งเตือนลูกบ้าน</h4>
+                <input type="text" id="notifyMsg" placeholder="ข้อความ เช่น ช่างจะเข้าบ่ายนี้ครับ">
+                <button class="btn-send-notify" onclick="sendCustomNotify()">ส่งการแจ้งเตือน</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let repairTasks = [
+        { id: 1, room: "204", title: "แอร์ไม่เย็น มีลมร้อนออก", priority: "urgent", status: "pending", date: "23/12/2025", img: "https://images.unsplash.com/photo-1581094288338-2314dddb79a6?w=400" },
+        { id: 2, room: "101", title: "ก๊อกน้ำในห้องน้ำรั่ว", priority: "normal", status: "processing", date: "22/12/2025", img: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400" },
+        { id: 3, room: "302", title: "หลอดไฟระเบียงขาด", priority: "normal", status: "completed", date: "20/12/2025", img: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400" }
+    ];
+
+    let currentStatusFilter = 'all';
+    let selectedTaskId = null;
+
+    function renderTable(data = repairTasks) {
+        const tbody = document.getElementById('repairTableBody');
+        tbody.innerHTML = '';
+
+        data.forEach(task => {
+            let statusBadge = '';
+            if(task.status === 'pending') statusBadge = '<span class="badge bg-pending">รอดำเนินการ</span>';
+            else if(task.status === 'processing') statusBadge = '<span class="badge bg-processing">กำลังซ่อม</span>';
+            else statusBadge = '<span class="badge bg-completed">เสร็จสิ้น</span>';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td><b>${task.room}</b></td>
+                    <td style="text-align:left;">
+                        ${task.priority === 'urgent' ? '<span style="color:red; font-size:10px;">[ด่วน]</span> ' : ''}
+                        ${task.title}
+                    </td>
+                    <td>${statusBadge}</td>
+                    <td>${task.date}</td>
+                    <td>
+                        <button class="btn-notify-row" onclick="quickNotify('${task.room}')">
+                            <i class="fas fa-bell"></i> เตือน
+                        </button>
+                    </td>
+                    <td><button class="btn-manage" onclick="openModal(${task.id})">จัดการ</button></td>
+                </tr>
+            `;
+        });
+        updateStats();
+    }
+
+    function updateStats() {
+        document.getElementById('countTotal').innerText = repairTasks.length;
+        document.getElementById('countPending').innerText = repairTasks.filter(t => t.status === 'pending').length;
+        document.getElementById('countProcessing').innerText = repairTasks.filter(t => t.status === 'processing').length;
+        document.getElementById('countDone').innerText = repairTasks.filter(t => t.status === 'completed').length;
+    }
+
+    // ฟังก์ชันส่งแจ้งเตือนด่วนจากตาราง
+    function quickNotify(roomNo) {
+        if(confirm(`ส่งการแจ้งเตือน "ช่างกำลังเดินทางไปที่ห้อง ${roomNo}" ใช่หรือไม่?`)) {
+            alert(`[ระบบจำลอง] ส่ง LINE Notify ถึงห้อง ${roomNo}: ช่างกำลังดำเนินการเข้าตรวจสอบพื้นที่ของท่าน`);
+        }
+    }
+
+    function openModal(id) {
+        selectedTaskId = id;
+        const task = repairTasks.find(t => t.id === id);
+        document.getElementById('mRoom').innerText = task.room;
+        document.getElementById('mTitle').innerText = task.title;
+        document.getElementById('mImg').src = task.img;
+        document.getElementById('statusSelect').value = task.status;
+        
+        let statusText = (task.status === 'pending') ? 'รอดำเนินการ' : (task.status === 'processing' ? 'กำลังซ่อม' : 'เสร็จสิ้น');
+        document.getElementById('mStatusText').innerText = statusText;
+        document.getElementById('mStatusText').style.color = (task.status === 'pending') ? 'var(--pending)' : (task.status === 'processing' ? 'var(--processing)' : 'var(--completed)');
+
+        document.getElementById('repairModal').style.display = 'block';
+    }
+
+    // ส่งแจ้งเตือนแบบพิมพ์ข้อความเองใน Modal
+    function sendCustomNotify() {
+        const msg = document.getElementById('notifyMsg').value;
+        const room = document.getElementById('mRoom').innerText;
+        if(!msg) return alert("กรุณากรอกข้อความที่ต้องการแจ้ง");
+        
+        alert(`[ระบบจำลอง] ส่งข้อความถึงห้อง ${room}: ${msg}`);
+        document.getElementById('notifyMsg').value = ''; // เคลียร์ช่อง
+    }
+
+    function updateStatus() {
+        const newStatus = document.getElementById('statusSelect').value;
+        const taskIndex = repairTasks.findIndex(t => t.id === selectedTaskId);
+        if(taskIndex !== -1) {
+            repairTasks[taskIndex].status = newStatus;
+            alert(`อัปเดตสถานะห้อง ${repairTasks[taskIndex].room} เรียบร้อยแล้ว (ระบบส่งแจ้งเตือนอัตโนมัติถึงลูกบ้านแล้ว)`);
+            closeModal();
+            renderTable();
+        }
+    }
+
+    function filterStatus(status, btn) {
+        document.querySelectorAll('.btn-f').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentStatusFilter = status;
+        filterData();
+    }
+
+    function filterData() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = repairTasks.filter(t => {
+            const matchesStatus = (currentStatusFilter === 'all' || t.status === currentStatusFilter);
+            const matchesSearch = t.room.includes(search) || t.title.toLowerCase().includes(search);
+            return matchesStatus && matchesSearch;
+        });
+        renderTable(filtered);
+    }
+
+    function closeModal() { document.getElementById('repairModal').style.display = 'none'; }
+    window.onclick = (e) => { if(e.target == document.getElementById('repairModal')) closeModal(); }
+
+    renderTable();
+</script>
+
+</body>
+</html>
