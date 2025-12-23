@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>พัสดุ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --c1: #CCD5AE; --c2: #E9EDC9; --c3: #FEFAE0; --c4: #FAEDCD; --c5: #D4A373;
+            --text: #555; --accent: #A3B18A;
+        }
+
+        body { font-family: 'Sarabun', sans-serif; background: var(--c3); padding: 20px; color: var(--text); margin: 0; }
+
+        .container { max-width: 1100px; margin: auto; }
+
+        /* Header Area */
+        .header-brand { text-align: center; margin-bottom: 30px; }
+        .header-brand h1 { color: var(--c5); margin: 0; font-size: 32px; }
+        .header-brand p { color: #888; margin: 5px 0; }
+
+        /* Hero Quick Actions */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+        .action-card { 
+            background: white; border-radius: 20px; padding: 30px; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); cursor: pointer; transition: 0.3s;
+            border: 2px solid transparent;
+        }
+        .action-card:hover { transform: translateY(-5px); border-color: var(--c1); }
+        .action-card i { font-size: 40px; color: var(--c5); margin-bottom: 15px; }
+        .action-card h2 { margin: 0; font-size: 20px; color: var(--text); }
+
+        /* Stats Dashboard */
+        .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-item { background: var(--c4); padding: 15px; border-radius: 15px; text-align: center; border: 1px solid var(--c2); }
+        .stat-item span { font-size: 14px; color: var(--c5); font-weight: bold; }
+        .stat-item div { font-size: 24px; font-weight: bold; }
+
+        /* Parcel Management Card */
+        .main-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,.05); }
+        
+        .filter-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .search-box { flex: 1; min-width: 250px; position: relative; }
+        .search-box input { width: 100%; padding: 12px 15px 12px 40px; border-radius: 12px; border: 1px solid var(--c5); outline: none; box-sizing: border-box; }
+        .search-box i { position: absolute; left: 15px; top: 15px; color: var(--c5); }
+
+        .filter-buttons { display: flex; gap: 8px; }
+        .btn-f { padding: 8px 15px; border-radius: 20px; border: 1px solid var(--c5); background: white; cursor: pointer; font-size: 13px; color: var(--c5); font-weight: bold; }
+        .btn-f.active { background: var(--c5); color: white; }
+
+        /* Table Design */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: var(--c2); padding: 15px; font-size: 14px; color: var(--text); }
+        td { padding: 15px; border-bottom: 1px solid #f9f9f9; text-align: center; font-size: 14px; }
+        .row-room { font-weight: bold; color: var(--c5); cursor: pointer; text-decoration: underline; }
+        
+        /* Status Badge */
+        .badge { padding: 5px 12px; border-radius: 10px; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; }
+        .pending { background: #FFF3CD; color: #856404; }
+        .delivered { background: var(--c1); color: #4F772D; }
+
+        /* Notification Icon */
+        .notified { color: #2ecc71; font-size: 11px; margin-top: 4px; display: block; }
+
+        /* Modal Popup */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
+        .modal-content { background: white; margin: 5% auto; padding: 25px; border-radius: 20px; width: 90%; max-width: 550px; position: relative; }
+        .close-btn { position: absolute; right: 20px; top: 20px; cursor: pointer; font-size: 20px; }
+        .modal-header { border-bottom: 2px solid var(--c2); padding-bottom: 10px; margin-bottom: 15px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .info-item b { color: var(--c5); font-size: 12px; display: block; }
+        .info-item span { font-size: 15px; }
+
+        .proof-section { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .proof-box { text-align: center; }
+        .proof-box img { width: 100%; height: 160px; object-fit: cover; border-radius: 12px; border: 1px solid #eee; }
+        .sig-canvas { height: 160px; background: #f9f9f9; border: 1px solid var(--c1); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: 'Dancing Script', cursive; font-size: 28px; color: #2C3E50; }
+        
+        .btn-deliver { width: 100%; background: var(--accent); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; }
+
+        @media (max-width: 600px) {
+            .action-grid { grid-template-columns: 1fr; }
+            .modal-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="container">
+    <div class="header-brand">
+        <h1><i class="fas fa-boxes"></i> พัสดุ</h1>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="action-grid">
+        <div class="action-card" onclick="openAddParcel()">
+            <i class="fas fa-camera"></i>
+            <h2>ถ่ายรูปรับพัสดุ</h2>
+            <small style="color: #aaa;">บันทึกพัสดุเข้าและแจ้งเตือนทันที</small>
+        </div>
+        <div class="action-card" onclick="alert('ฟีเจอร์สแกน QR Code สำหรับผู้เช่ารับพัสดุ')">
+            <i class="fas fa-qrcode"></i>
+            <h2>สแกนจ่ายพัสดุ</h2>
+            <small style="color: #aaa;">ใช้หลักฐาน QR เพื่อความรวดเร็ว</small>
+        </div>
+    </div>
+
+    <!-- สรุปยอด -->
+    <div class="stats-bar">
+        <div class="stat-item"><span>พัสดุวันนี้</span><div id="countTotal">12</div></div>
+        <div class="stat-item"><span>รอมารับ</span><div id="countPending" style="color: #e67e22;">5</div></div>
+        <div class="stat-item"><span>รับแล้ว</span><div id="countDone" style="color: #27ae60;">7</div></div>
+    </div>
+
+    <!-- Main Parcel List -->
+    <div class="main-card">
+        <div class="filter-controls">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="ค้นหาเลขห้อง หรือชื่อผู้เช่า..." onkeyup="applyFilters()">
+            </div>
+            <div class="filter-buttons">
+                <button class="btn-f active" onclick="filterStatus('all', this)">ทั้งหมด</button>
+                <button class="btn-f" onclick="filterStatus('pending', this)">รอมารับ</button>
+                <button class="btn-f" onclick="filterStatus('delivered', this)">รับแล้ว</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>เลขห้อง</th>
+                        <th>ผู้รับพัสดุ</th>
+                        <th>บริษัทขนส่ง</th>
+                        <th>สถานะ</th>
+                        <th>เวลาเข้า</th>
+                        <th>จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody id="parcelTable">
+                    <!-- Data will be populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal รายละเอียดและหลักฐาน -->
+<div id="parcelModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <div class="modal-header">
+            <h2 style="margin:0; color:var(--c5); font-size:20px;">📦 ข้อมูลและหลักฐานพัสดุ</h2>
+        </div>
+        
+        <div class="info-grid">
+            <div class="info-item"><b>ห้อง</b><span id="mRoom"></span></div>
+            <div class="info-item"><b>ชื่อผู้เช่า</b><span id="mName"></span></div>
+            <div class="info-item"><b>รหัสพัสดุ</b><span id="mId"></span></div>
+            <div class="info-item"><b>สถานะแจ้งเตือน</b><span style="color: #2ecc71;"><i class="fas fa-check-circle"></i> แจ้งเตือนแล้ว</span></div>
+        </div>
+
+        <div class="proof-section">
+            <div class="proof-box">
+                <span style="font-size: 12px; font-weight: bold; color: #888; display: block; margin-bottom: 5px;">📷 รูปถ่ายขณะรับ</span>
+                <img id="mImg" src="" alt="Parcel Photo">
+            </div>
+            <div class="proof-box">
+                <span style="font-size: 12px; font-weight: bold; color: #888; display: block; margin-bottom: 5px;">✍️ ลายเซ็นผู้รับ</span>
+                <div id="mSig" class="sig-canvas"></div>
+            </div>
+        </div>
+
+        <div id="deliverAction">
+            <button class="btn-deliver" onclick="confirmDelivery()">บันทึกการรับพัสดุ</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentFilter = 'all';
+    let parcels = [
+        { id: "PK-1001", room: "101", name: "วรเมธ สุขใจ", carrier: "Kerry Express", status: "pending", timeIn: "09:30", img: "https://images.unsplash.com/photo-1586528116311-ad8de3c8a115?w=400", sig: "" },
+        { id: "PK-1002", room: "305", name: "นลินทิพย์ มีดี", carrier: "Flash Express", status: "delivered", timeIn: "10:15", img: "https://images.unsplash.com/photo-1566576721346-d4a3b4eaad5b?w=400", sig: "Nalintip" },
+        { id: "PK-1003", room: "202", name: "สมชาย รักชาติ", carrier: "Shopee Xpress", status: "pending", timeIn: "11:05", img: "https://images.unsplash.com/photo-1580674684081-7617fbf3d745?w=400", sig: "" },
+        { id: "PK-1004", room: "510", name: "ธัญญาดา แสงทอง", carrier: "J&T Express", status: "delivered", timeIn: "08:45", img: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=400", sig: "Thanyada" }
+    ];
+
+    let selectedParcelIdx = null;
+
+    function renderTable(data = parcels) {
+        const tbody = document.getElementById('parcelTable');
+        tbody.innerHTML = '';
+        
+        data.forEach((p, idx) => {
+            const realIdx = parcels.indexOf(p);
+            tbody.innerHTML += `
+                <tr>
+                    <td class="row-room" onclick="viewParcel(${realIdx})">${p.room}</td>
+                    <td>${p.name}</td>
+                    <td>${p.carrier}</td>
+                    <td>
+                        <span class="badge ${p.status === 'pending' ? 'pending' : 'delivered'}">
+                            ${p.status === 'pending' ? '<i class="fas fa-clock"></i> รอมารับ' : '<i class="fas fa-check"></i> รับแล้ว'}
+                        </span>
+                        ${p.status === 'pending' ? '<span class="notified"><i class="fab fa-line"></i> แจ้งแล้ว 09:32</span>' : ''}
+                    </td>
+                    <td>${p.timeIn} น.</td>
+                    <td>
+                        <button class="btn-f" onclick="viewParcel(${realIdx})">รายละเอียด</button>
+                    </td>
+                </tr>
+            `;
+        });
+        updateStats();
+    }
+
+    function viewParcel(idx) {
+        selectedParcelIdx = idx;
+        const p = parcels[idx];
+        document.getElementById('mRoom').innerText = p.room;
+        document.getElementById('mName').innerText = p.name;
+        document.getElementById('mId').innerText = p.id;
+        document.getElementById('mImg').src = p.img;
+        document.getElementById('mSig').innerText = p.sig || "ยังไม่ได้เซ็นรับ";
+        
+        document.getElementById('deliverAction').style.display = (p.status === 'pending') ? 'block' : 'none';
+        document.getElementById('parcelModal').style.display = 'block';
+    }
+
+    function confirmDelivery() {
+        const sigName = prompt("กรุณาให้ผู้เช่าระบุชื่อเพื่อบันทึกลายเซ็น:");
+        if(sigName) {
+            parcels[selectedParcelIdx].status = 'delivered';
+            parcels[selectedParcelIdx].sig = sigName;
+            closeModal();
+            renderTable();
+            alert("บันทึกการรับพัสดุและเก็บหลักฐานเรียบร้อยแล้ว");
+        }
+    }
+
+    function openAddParcel() {
+        const room = prompt("ระบุเลขห้อง:");
+        if(room) {
+            const now = new Date();
+            parcels.push({
+                id: "PK-" + (1000 + parcels.length + 1),
+                room: room,
+                name: "ผู้เช่าห้อง " + room,
+                carrier: "ขนส่งทั่วไป",
+                status: "pending",
+                timeIn: now.getHours() + ":" + now.getMinutes(),
+                img: "https://via.placeholder.com/400x300?text=Taken+Parcel+Photo",
+                sig: ""
+            });
+            renderTable();
+            alert("ระบบถ่ายรูปเสร็จสิ้น บันทึกข้อมูลและส่งการแจ้งเตือน LINE ถึงห้อง " + room + " แล้ว!");
+        }
+    }
+
+    function filterStatus(status, btn) {
+        document.querySelectorAll('.btn-f').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = status;
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = parcels.filter(p => {
+            const matchesStatus = (currentFilter === 'all' || p.status === currentFilter);
+            const matchesSearch = p.room.includes(search) || p.name.toLowerCase().includes(search);
+            return matchesStatus && matchesSearch;
+        });
+        renderTable(filtered);
+    }
+
+    function updateStats() {
+        document.getElementById('countTotal').innerText = parcels.length;
+        document.getElementById('countPending').innerText = parcels.filter(p => p.status === 'pending').length;
+        document.getElementById('countDone').innerText = parcels.filter(p => p.status === 'delivered').length;
+    }
+
+    function closeModal() { document.getElementById('parcelModal').style.display = 'none'; }
+    window.onclick = (e) => { if(e.target == document.getElementById('parcelModal')) closeModal(); }
+
+    renderTable();
+</script>
+
+</body>
+</html>
