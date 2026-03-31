@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cozy Home - Admin System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --c1: #CCD5AE; --c2: #E9EDC9; --c3: #FEFAE0; --c4: #FAEDCD; --c5: #D4A373;
+            --white: #ffffff; --text: #444; --danger: #e74c3c; --bg-light: #f6f5f2;
+            --nav-height: 65px;
+        }
+
+        body { font-family: 'Sarabun', sans-serif; background-color: var(--bg-light); margin: 0; padding: 0; color: var(--text); overflow-x: hidden; }
+
+        /* --- Navbar --- */
+        .top-navbar { 
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 25px; height: var(--nav-height);
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #eee;
+        }
+        .nav-left { display: flex; align-items: center; gap: 15px; flex: 1; }
+        .menu-toggle { font-size: 20px; color: var(--c5); cursor: pointer; padding: 5px; }
+        .brand-logo { font-weight: 600; color: #5d4037; font-size: 16px; letter-spacing: 1.5px; text-transform: uppercase; border-left: 2px solid #eee; padding-left: 15px; }
+        .nav-center { flex: 2; text-align: center; }
+        .page-title { margin: 0; font-size: 18px; font-weight: 600; color: var(--text); }
+
+        .nav-right { flex: 1; display: flex; justify-content: flex-end; position: relative; }
+        .user-nav-item { display: flex; align-items: center; cursor: pointer; padding: 5px; position: relative; }
+        .nav-user-small { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid var(--c4); }
+        
+        .user-dropdown { 
+            position: absolute; right: 0; top: 45px; background: white; border: 1px solid #f0f0f0; 
+            border-radius: 12px; display: none; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 160px; overflow: hidden; 
+        }
+        .user-nav-item:hover .user-dropdown { display: block; }
+        .user-dropdown button { display: block; width: 100%; padding: 12px 15px; border: none; background: none; text-align: left; font-size: 14px; cursor: pointer; font-family: 'Sarabun'; transition: 0.2s; color: #555; }
+        .user-dropdown button i { margin-right: 10px; width: 15px; color: #888; text-align: center; }
+        .user-dropdown button:hover { background: #fffaf4; color: var(--c5); }
+
+        /* --- Sidebar --- */
+        .sidebar { 
+            position: fixed; top: 0; left: -300px; width: 300px; height: 100%; 
+            background: var(--white); z-index: 2001; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            box-shadow: 15px 0 40px rgba(0,0,0,0.1); overflow-y: auto;
+        }
+        .sidebar.active { left: 0; }
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.2); z-index: 2000; display: none; backdrop-filter: blur(2px); }
+        .sidebar-header { padding: 40px 20px; text-align: center; background: linear-gradient(135deg, #faf1e6 0%, #ffffff 100%); border-bottom: 1px solid #f8f8f8; }
+        .sidebar-user-img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.08); object-fit: cover; }
+        .sidebar-menu { list-style: none; padding: 15px; margin: 0; }
+        .sidebar-menu a { display: flex; align-items: center; gap: 12px; padding: 12px 15px; text-decoration: none; color: #555; border-radius: 10px; transition: 0.3s; font-weight: 500; font-size: 14.5px; }
+        .sidebar-menu a.active { background: #fff9f2; color: var(--c5); font-weight: 600; }
+        .sidebar-menu a:hover:not(.active) { background: #fdfdfd; transform: translateX(5px); color: var(--c5); }
+
+        /* --- Main Content Section --- */
+        main { padding: 30px 20px; max-width: 1100px; margin: 0 auto; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+
+        /* --- Meter Table Style --- */
+        .meter-card { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #eee; text-align: left; }
+        .filter-bar { margin-bottom: 20px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .filter-btn { padding: 7px 18px; border-radius: 20px; border: 1px solid var(--c5); background: white; cursor: pointer; font-size: 13px; color: var(--c5); transition: 0.2s; }
+        .filter-btn.active { background: var(--c5); color: white; }
+
+        .table-responsive { overflow-x: auto; border-radius: 15px; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; font-size: 14px; }
+        th { background: #fafafa; padding: 15px; border-bottom: 1px solid #eee; color: #888; font-size: 11px; text-transform: uppercase; }
+        td { padding: 15px; border-bottom: 1px solid #f9f9f9; text-align: center; }
+        .floor-row { background: #fdfdfd !important; text-align: left !important; font-weight: bold; color: var(--c5); border-left: 5px solid var(--c5) !important; padding-left: 20px !important; }
+
+        .input-meter { width: 90px; padding: 10px; border-radius: 12px; border: 1px solid transparent; background: #f3f3f3; text-align: center; font-weight: bold; outline: none; transition: 0.3s; }
+        .input-meter:focus { background: white; border-color: var(--c5); }
+        .unit-res { font-weight: bold; color: #6b8e23; }
+        .btn-save-meter { width: 100%; padding: 16px; border: none; border-radius: 15px; background: var(--c5); color: white; font-weight: bold; cursor: pointer; margin-top: 25px; font-size: 16px; box-shadow: 0 4px 15px rgba(212, 163, 115, 0.2); }
+
+        /* --- Modals Style --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        .modal-card { background: white; width: 90%; max-width: 400px; border-radius: 25px; padding: 30px; box-sizing: border-box; box-shadow: 0 20px 50px rgba(0,0,0,0.15); }
+        
+        .modal-input-group { margin-bottom: 15px; text-align: left; }
+        .modal-input-group label { font-size: 12px; color: #999; margin-bottom: 5px; display: block; text-transform: uppercase; }
+        .modal-input-group input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #eee; background: #fafafa; font-family: 'Sarabun'; outline: none; box-sizing: border-box; font-size: 14px; color: #555; }
+        
+        .btn-row { display: flex; gap: 12px; margin-top: 20px; }
+        .btn-confirm { flex: 2; background: var(--danger); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; font-family: 'Sarabun'; }
+        .btn-cancel { flex: 1; background: #f1f1f1; border: none; padding: 12px; border-radius: 10px; cursor: pointer; color: #777; font-family: 'Sarabun'; }
+        .btn-close-profile { width: 100%; background: #f1f1f1; border: none; padding: 12px; border-radius: 10px; cursor: pointer; color: #777; font-family: 'Sarabun'; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <header class="top-navbar">
+        <div class="nav-left">
+            <div class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></div>
+            <div class="brand-logo">Cozy Home</div>
+        </div>
+        <div class="nav-center">
+            <h2 class="page-title" id="navTitle">กระดานข่าวสาร</h2>
+        </div>
+        <div class="nav-right">
+            <div class="user-nav-item">
+                <img src="https://i.pravatar.cc/150?u=admin" class="nav-user-small">
+                <div class="user-dropdown">
+                    <button onclick="openModal('profileModal')"><i class="fas fa-user-circle"></i> ข้อมูลส่วนตัว</button>
+                    <button onclick="openModal('logoutConfirmModal')"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <nav id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <img src="https://i.pravatar.cc/150?u=admin" class="sidebar-user-img">
+            <h4 style="margin:12px 0 0 0; color:#5d4037; font-size:16px;">แอดมินนิติ</h4>
+            <p style="font-size:12px; color:#aaa; margin-top:4px;">Management System</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="#" onclick="switchPage('news', 'กระดานข่าวสาร', this)" class="active"><i class="fas fa-bullhorn"></i> กระดานข่าวสาร</a></li>
+            <li><a href="#" onclick="switchPage('meter', 'จดมิเตอร์น้ำ-ไฟ', this)"><i class="fas fa-tachometer-alt"></i> จดมิเตอร์น้ำ-ไฟ</a></li>
+            <li><a href="#" onclick="switchPage('bill', 'เลือกรอบบิล', this)"><i class="fas fa-calendar-check"></i> เลือกรอบบิล</a></li>
+            <li><a href="#" onclick="switchPage('parcel', 'รายการพัสดุ', this)"><i class="fas fa-box"></i> รายการพัสดุ</a></li>
+            <li><a href="#" onclick="switchPage('repair', 'จัดการแจ้งซ่อม', this)"><i class="fas fa-tools"></i> จัดการแจ้งซ่อม</a></li>
+            <li><a href="#" onclick="switchPage('contract', 'สัญญาเช่า/ซื้อขาย', this)"><i class="fas fa-file-contract"></i> สัญญาเช่า/ซื้อขาย</a></li>
+            <li><a href="#" onclick="switchPage('unit', 'ผังห้อง/ยูนิต', this)"><i class="fas fa-th-large"></i> ผังห้อง/ยูนิต</a></li>
+            <li><a href="#" onclick="switchPage('report', 'รายงานสรุป', this)"><i class="fas fa-chart-line"></i> รายงานสรุป</a></li>
+            <hr style="border:0; border-top:1px solid #f5f5f5; margin:10px 0;">
+            <li><a href="#" onclick="openModal('profileModal')"><i class="fas fa-user-circle"></i> ข้อมูลส่วนตัว</a></li>
+            <li><a href="#" onclick="openModal('logoutConfirmModal')" style="color:var(--danger)"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div id="newsPage" class="content-section active">
+            <div style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); border: 1px solid #eee; text-align: center;">
+                <h2 style="color: var(--c5);">ยินดีต้อนรับ</h2>
+                <p style="color: #999;">กำลังแสดงข้อมูลในส่วนของ <span id="spanPageName" style="color: #555; font-weight: 600;">กระดานข่าวสาร</span></p>
+            </div>
+        </div>
+
+        <div id="meterPage" class="content-section">
+            <div class="meter-card">
+                <div class="filter-bar" id="meterFilters">
+                    <span style="font-weight: bold; margin-right: 10px;">เลือกชั้น:</span>
+                    <button class="filter-btn active" onclick="filterMeter('all', this)">ทั้งหมด</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th rowspan="2">ห้อง</th>
+                                <th colspan="3" style="background:#f1f8e944;">มิเตอร์น้ำ (Unit)</th>
+                                <th colspan="3" style="background:#fff8e144;">มิเตอร์ไฟ (Unit)</th>
+                                <th rowspan="2">สถานะ</th>
+                            </tr>
+                            <tr style="font-size:10px;">
+                                <th>เก่า</th><th>ใหม่</th><th>ใช้ไป</th>
+                                <th>เก่า</th><th>ใหม่</th><th>ใช้ไป</th>
+                            </tr>
+                        </thead>
+                        <tbody id="meterBody">
+                            </tbody>
+                    </table>
+                </div>
+                <button class="btn-save-meter" onclick="saveAllMeters()"><i class="fas fa-save"></i> บันทึกข้อมูลเลขมิเตอร์ทั้งหมด</button>
+            </div>
+        </div>
+    </main>
+
+    <div id="profileModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="text-align:center; color:#5d4037; margin-top: 0;">👤 ข้อมูลส่วนตัว</h3>
+            <div style="text-align:center; margin-bottom:20px;">
+                <img src="https://i.pravatar.cc/150?u=admin" style="width:90px; height:90px; border-radius:50%; border:3px solid white; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
+            </div>
+            <div class="modal-input-group">
+                <label>ชื่อผู้ใช้งาน</label>
+                <input type="text" value="แอดมินนิติ" readonly>
+            </div>
+            <div class="modal-input-group">
+                <label>ตำแหน่ง</label>
+                <input type="text" value="ผู้ดูแลระบบ (Admin)" readonly>
+            </div>
+            <button class="btn-close-profile" onclick="closeModal('profileModal')">ปิดหน้าต่าง</button>
+        </div>
+    </div>
+
+    <div id="logoutConfirmModal" class="modal-overlay">
+        <div class="modal-card" style="text-align: center;">
+            <i class="fas fa-sign-out-alt" style="font-size: 45px; color: var(--danger); margin-bottom: 15px;"></i>
+            <h3 style="margin: 0;">ต้องการออกจากระบบ?</h3>
+            <p style="color: #888; margin-top: 8px; font-size: 14px;">คุณแน่ใจหรือไม่ว่าต้องการออกจากเซสชันนี้</p>
+            <div class="btn-row">
+                <button class="btn-cancel" onclick="closeModal('logoutConfirmModal')">ยกเลิก</button>
+                <button class="btn-confirm" onclick="location.reload()">ยืนยัน</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // เปลี่ยนจากข้อมูลแบบ Fix ให้เป็น Array ว่าง เพื่อรอรับข้อมูลจาก Database
+        let myRooms = [];
+
+        // ฟังก์ชันดึงข้อมูลจาก get_meters.php
+        function loadMeterData() {
+            fetch('get_meters.php')
+            .then(res => res.json())
+            .then(data => {
+                myRooms = data;
+                // ถ้ายืนอยู่หน้ามิเตอร์ให้วาดตารางใหม่เลย
+                if(document.getElementById('meterPage').classList.contains('active')) {
+                    renderMeterData();
+                }
+            })
+            .catch(err => console.error("เกิดข้อผิดพลาดในการโหลดข้อมูล:", err));
+        }
+
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            const ov = document.getElementById('sidebarOverlay');
+            sb.classList.toggle('active');
+            ov.style.display = sb.classList.contains('active') ? 'block' : 'none';
+        }
+
+        function switchPage(pageKey, title, btn) {
+            document.getElementById('navTitle').innerText = title;
+            document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+            btn.classList.add('active');
+
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            if(pageKey === 'meter') {
+                document.getElementById('meterPage').classList.add('active');
+                renderMeterData();
+            } else {
+                document.getElementById('newsPage').classList.add('active');
+                document.getElementById('spanPageName').innerText = title;
+            }
+            toggleSidebar();
+        }
+
+        function renderMeterData() {
+            const tbody = document.getElementById('meterBody');
+            const filterBar = document.getElementById('meterFilters');
+            tbody.innerHTML = '';
+
+            // สร้างปุ่มกรองชั้นอัตโนมัติ
+            if(filterBar.children.length <= 2) {
+                const floors = [...new Set(myRooms.map(r => r.floor))].sort();
+                floors.forEach(f => {
+                    filterBar.innerHTML += `<button class="filter-btn" onclick="filterMeter(${f}, this)">ชั้น ${f}</button>`;
+                });
+            }
+
+            let lastFloor = null;
+            myRooms.forEach(r => {
+                if(r.floor !== lastFloor) {
+                    lastFloor = r.floor;
+                    tbody.innerHTML += `<tr><td colspan="8" class="floor-row" data-f="${lastFloor}">ชั้น ${lastFloor}</td></tr>`;
+                }
+
+                // เช็คว่ามีค่าใหม่ถูกบันทึกไว้ในระบบหรือยัง
+                let valW = r.newW > 0 ? r.newW : '';
+                let valE = r.newE > 0 ? r.newE : '';
+
+                tbody.innerHTML += `
+                    <tr data-f="${r.floor}">
+                        <td style="font-weight:600;">${r.id}</td>
+                        <td style="color:#aaa">${r.oldW}</td>
+                        <td><input type="number" class="input-meter" value="${valW}" placeholder="-" oninput="calc('${r.id}', ${r.oldW}, ${r.oldE})" id="nw-${r.id}"></td>
+                        <td class="unit-res" id="uw-${r.id}">0</td>
+                        <td style="color:#aaa">${r.oldE}</td>
+                        <td><input type="number" class="input-meter" value="${valE}" placeholder="-" oninput="calc('${r.id}', ${r.oldW}, ${r.oldE})" id="ne-${r.id}"></td>
+                        <td class="unit-res" id="ue-${r.id}">0</td>
+                        <td id="st-${r.id}" style="color:#ccc; font-size:11px">รอกรอกข้อมูล</td>
+                    </tr>`;
+                
+                // คำนวณค่าอัตโนมัติหากมีข้อมูลอยู่แล้ว
+                if(valW || valE) calc(r.id, r.oldW, r.oldE);
+            });
+        }
+
+        function calc(id, oldW, oldE) {
+            const nw = parseInt(document.getElementById(`nw-${id}`).value) || 0;
+            const ne = parseInt(document.getElementById(`ne-${id}`).value) || 0;
+            const uw = (nw - oldW) > 0 ? (nw - oldW) : 0;
+            const ue = (ne - oldE) > 0 ? (ne - oldE) : 0;
+            document.getElementById(`uw-${id}`).innerText = uw;
+            document.getElementById(`ue-${id}`).innerText = ue;
+
+            const st = document.getElementById(`st-${id}`);
+            if(nw > oldW && ne > oldE) {
+                st.innerHTML = '<i class="fas fa-check-circle" style="color:var(--c5)"></i> เรียบร้อย';
+                st.style.color = "var(--c5)";
+            } else { 
+                st.innerText = 'รอกรอกข้อมูล'; 
+                st.style.color = "#ccc"; 
+            }
+        }
+
+        function filterMeter(f, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('#meterBody tr').forEach(tr => {
+                const rf = tr.getAttribute('data-f');
+                tr.style.display = (f === 'all' || rf == f) ? '' : 'none';
+            });
+        }
+
+        // ฟังก์ชันใหม่ สำหรับส่งข้อมูลไปบันทึกลง Database
+        function saveAllMeters() {
+            let dataToSend = [];
+            
+            // วนลูปเก็บค่าจากช่อง Input
+            myRooms.forEach(r => {
+                let nwVal = document.getElementById(`nw-${r.id}`).value;
+                let neVal = document.getElementById(`ne-${r.id}`).value;
+                
+                if(nwVal || neVal) {
+                    dataToSend.push({
+                        id: r.id,
+                        nw: nwVal ? parseInt(nwVal) : 0,
+                        ne: neVal ? parseInt(neVal) : 0
+                    });
+                }
+            });
+
+            if(dataToSend.length === 0) return alert("ยังไม่ได้กรอกข้อมูลมิเตอร์เลยครับ");
+
+            // ส่งข้อมูลไปที่ไฟล์ save_meters.php
+            fetch('save_meters.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dataToSend)
+            })
+            .then(res => res.text())
+            .then(msg => {
+                alert(msg);     // แสดงข้อความว่าบันทึกสำเร็จ
+                loadMeterData(); // รีเฟรชข้อมูลใหม่
+            })
+            .catch(err => alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล"));
+        }
+
+        function openModal(id) { 
+            if(document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
+            document.getElementById(id).style.display = 'flex'; 
+        }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // ให้โหลดข้อมูลมิเตอร์อัตโนมัติเมื่อเปิดเว็บขึ้นมา
+        window.onload = loadMeterData;
+    </script>
+</body>
+</html>
