@@ -195,21 +195,37 @@
         alert("ลงทะเบียนสำเร็จ!"); 
         showLogin();
     }
-    // ล็อกอิน
-    function handleLogin() {
-        const u = document.getElementById('loginUsername').value.trim();
-        const p = document.getElementById('loginPassword').value.trim();
-        const users = JSON.parse(localStorage.getItem('cozy_users'));
-        if(users[u] && users[u].pass === p) {
-            if(users[u].role !== selectedLoginRole) {
-                alert(`กรุณาเข้าสู่ระบบผ่านแท็บ "${users[u].role === 'ADMIN' ? 'ผู้ดูแล' : 'ผู้เช่า'}"`);
-                return;
-            }
-            alert("เข้าสู่ระบบสำเร็จ! สวัสดีคุณ " + users[u].name);
+// ตัวอย่างการเปลี่ยนฟังก์ชัน Login ให้เชื่อม DB จริง
+async function handleLogin() {
+    const u = document.getElementById('loginUsername').value.trim();
+    const p = document.getElementById('loginPassword').value.trim();
+
+    const formData = new FormData();
+    formData.append('username', u);
+    formData.append('password', p);
+    formData.append('role', selectedLoginRole);
+
+    try {
+        // ดึงข้อมูลจาก API แทน localStorage
+        const response = await fetch('auth_api.php?action=login', {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+
+        if(result.status === "success") {
+            alert("เข้าสู่ระบบสำเร็จ! สวัสดีคุณ " + result.user.fullname);
+            // เก็บข้อมูลผู้ใช้ไว้ใน Session เพื่อไปใช้หน้าอื่น
+            sessionStorage.setItem('user', JSON.stringify(result.user));
+            window.location.href = "newsboard.html"; // หรือหน้า Dashboard ของคุณ
         } else {
-            alert("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!");
+            alert(result.message);
         }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
     }
+}
     function handleResetPassword() {
         const u = document.getElementById('forgotUser').value.trim();
         const r = document.getElementById('forgotRoom').value.trim();
