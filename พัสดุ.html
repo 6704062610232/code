@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cozy Home - ระบบจัดการพัสดุ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --c1: #CCD5AE; --c2: #E9EDC9; --c3: #FEFAE0; --c4: #FAEDCD; --c5: #D4A373;
+            --white: #ffffff; --text: #444; --danger: #e74c3c; --bg-light: #f6f5f2;
+            --nav-height: 65px;
+            --pending: #e67e22; --completed: #27ae60;
+        }
+
+        body { font-family: 'Sarabun', sans-serif; background-color: var(--bg-light); margin: 0; padding: 0; color: var(--text); overflow-x: hidden; }
+
+        /* --- Navbar --- */
+        .top-navbar { 
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 25px; height: var(--nav-height);
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #eee;
+        }
+        .nav-left { display: flex; align-items: center; gap: 15px; flex: 1; }
+        .menu-toggle { font-size: 20px; color: var(--c5); cursor: pointer; padding: 5px; }
+        .brand-logo { font-weight: 600; color: #5d4037; font-size: 16px; letter-spacing: 1.5px; text-transform: uppercase; border-left: 2px solid #eee; padding-left: 15px; }
+        .nav-center { flex: 2; text-align: center; }
+        .page-title { margin: 0; font-size: 18px; font-weight: 600; color: var(--text); }
+        .nav-right { flex: 1; display: flex; justify-content: flex-end; position: relative; }
+        .user-nav-item { display: flex; align-items: center; cursor: pointer; padding: 5px; position: relative; }
+        .nav-user-small { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid var(--c4); }
+        
+        /* Dropdown */
+        .user-dropdown { 
+            position: absolute; right: 0; top: 45px; background: white; border: 1px solid #f0f0f0; 
+            border-radius: 12px; display: none; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 160px; overflow: hidden; 
+        }
+        .user-nav-item:hover .user-dropdown { display: block; }
+        .user-dropdown button { display: block; width: 100%; padding: 12px 15px; border: none; background: none; text-align: left; font-size: 14px; cursor: pointer; font-family: 'Sarabun'; transition: 0.2s; color: #555; }
+        .user-dropdown button i { margin-right: 10px; width: 15px; color: #888; text-align: center; }
+        .user-dropdown button:hover { background: #fffaf4; color: var(--c5); }
+
+        /* --- Sidebar --- */
+        .sidebar { 
+            position: fixed; top: 0; left: -300px; width: 300px; height: 100%; 
+            background: var(--white); z-index: 2001; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            box-shadow: 15px 0 40px rgba(0,0,0,0.1); overflow-y: auto;
+        }
+        .sidebar.active { left: 0; }
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.2); z-index: 2000; display: none; backdrop-filter: blur(2px); }
+        .sidebar-header { padding: 40px 20px; text-align: center; background: linear-gradient(135deg, #faf1e6 0%, #ffffff 100%); border-bottom: 1px solid #f8f8f8; }
+        .sidebar-user-img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.08); object-fit: cover; }
+        .sidebar-menu { list-style: none; padding: 15px; margin: 0; }
+        .sidebar-menu a { display: flex; align-items: center; gap: 12px; padding: 12px 15px; text-decoration: none; color: #555; border-radius: 10px; transition: 0.3s; font-weight: 500; font-size: 14.5px; }
+        .sidebar-menu a i { width: 20px; text-align: center; font-size: 16px; color: #999; }
+        .sidebar-menu a.active { background: #fff9f2; color: var(--c5); font-weight: 600; }
+        .sidebar-menu a.active i { color: var(--c5); }
+        .sidebar-menu a.danger { color: var(--danger); margin-top: 10px; }
+
+        /* --- Layout --- */
+        main { padding: 30px 20px; max-width: 1200px; margin: 0 auto; }
+        .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-item { background: white; padding: 20px; border-radius: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border-bottom: 4px solid #ddd; }
+        .stat-item div { font-size: 24px; font-weight: bold; margin-top: 5px; }
+        .main-card { background: white; border-radius: 25px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
+
+        .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 25px; }
+        .toolbar-left { display: flex; align-items: center; gap: 10px; flex: 1; }
+        .search-box { position: relative; width: 170px; flex-shrink: 0; }
+        .search-box input { width: 100%; padding: 10px 10px 10px 35px; border-radius: 12px; border: 1px solid #eee; background: #fafafa; outline: none; font-family: 'Sarabun'; font-size: 13px; box-sizing: border-box; }
+        .search-box i { position: absolute; left: 12px; top: 12px; color: var(--c5); }
+        .btn-tab-group { display: flex; gap: 6px; }
+        .btn-tab { padding: 8px 14px; border-radius: 20px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 13px; color: var(--text); font-family: 'Sarabun'; white-space: nowrap; }
+        .btn-tab.active { background: var(--c5); color: white; border-color: var(--c5); font-weight: 600; }
+        .btn-add-main { background: var(--c5); color: white; border: none; padding: 10px 18px; border-radius: 15px; cursor: pointer; font-family: 'Sarabun'; font-weight: 600; font-size: 13px; box-shadow: 0 4px 10px rgba(212, 163, 115, 0.2); }
+
+        /* Table */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 850px; }
+        th { text-align: center; padding: 15px; font-size: 12px; color: #999; border-bottom: 1px solid #eee; }
+        td { padding: 18px 15px; text-align: center; font-size: 14px; border-bottom: 1px solid #fcfcfc; }
+        .badge { padding: 5px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; color: white; min-width: 95px; display: inline-block; cursor: pointer; }
+        .bg-pending { background: var(--pending); }
+        .bg-completed { background: var(--completed); }
+        .btn-manage-row { background: transparent; border: 1px solid var(--c5); color: var(--c5); padding: 5px 12px; border-radius: 12px; cursor: pointer; font-size: 12px; font-family: 'Sarabun'; }
+
+        /* --- Modals (Copy จากหน้าแจ้งซ่อม) --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        .modal-card { background: white; width: 90%; max-width: 400px; border-radius: 25px; padding: 30px; box-sizing: border-box; box-shadow: 0 20px 50px rgba(0,0,0,0.15); }
+        .repair-style-modal { max-width: 450px !important; border-radius: 30px !important; padding: 35px !important; text-align: center; }
+        
+        .modal-input-group { margin-bottom: 15px; text-align: left; }
+        .modal-input-group label { font-size: 12px; color: #999; margin-bottom: 5px; display: block; text-transform: uppercase; }
+        .modal-input-group input, .modal-input-group select { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Sarabun'; outline: none; box-sizing: border-box; font-size: 14px; color: #555; }
+        .upload-area { border: 2px dashed #faedcd; background: #fffdf9; border-radius: 15px; padding: 25px; text-align: center; color: var(--c5); cursor: pointer; margin-bottom: 20px; font-size: 13px; }
+        .preview-img { width: 100%; max-height: 200px; object-fit: contain; border-radius: 15px; margin-top: 10px; display: none; background: #fff; }
+        
+        .btn-row { display: flex; gap: 12px; margin-top: 20px; }
+        .btn-brown { flex: 2; background: var(--c5); color: white; border: none; padding: 14px; border-radius: 15px; cursor: pointer; font-weight: bold; font-family: 'Sarabun'; }
+        .btn-cancel { flex: 1; background: #f1f1f1; border: none; padding: 14px; border-radius: 15px; cursor: pointer; color: #777; font-family: 'Sarabun'; }
+        .btn-confirm { flex: 2; background: var(--danger); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; font-family: 'Sarabun'; }
+        .btn-close-profile { width: 100%; background: #f1f1f1; border: none; padding: 12px; border-radius: 10px; cursor: pointer; color: #777; font-family: 'Sarabun'; margin-top: 10px; }
+
+        @media (max-width: 992px) { .toolbar { flex-direction: column; align-items: stretch; } }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <header class="top-navbar">
+        <div class="nav-left">
+            <div class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></div>
+            <div class="brand-logo">Cozy Home</div>
+        </div>
+        <div class="nav-center"><h2 class="page-title">จัดการพัสดุ</h2></div>
+        <div class="nav-right">
+            <div class="user-nav-item">
+                <img src="https://i.pravatar.cc/150?u=admin" class="nav-user-small">
+                <div class="user-dropdown">
+                    <button onclick="openModal('profileModal')"><i class="fas fa-user-circle"></i> ข้อมูลส่วนตัว</button>
+                    <button onclick="openModal('logoutConfirmModal')"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar Overlay -->
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <nav id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <img src="https://i.pravatar.cc/150?u=admin" class="sidebar-user-img">
+            <h4 style="margin:12px 0 0 0; color:#5d4037; font-size:16px;">แอดมินนิติ</h4>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="#" class="active"><i class="fas fa-box"></i> จัดการพัสดุ</a></li>
+            <hr style="border:0; border-top:1px solid #f5f5f5; margin:10px 0;">
+            <li><a href="#" onclick="openModal('profileModal')"><i class="fas fa-user-circle"></i> ข้อมูลส่วนตัว</a></li>
+            <li><a href="#" onclick="openModal('logoutConfirmModal')" class="danger"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="stats-bar">
+            <div class="stat-item"><span>ทั้งหมด</span><div id="countTotal">0</div></div>
+            <div class="stat-item" style="color:var(--pending);"><span>รอมารับ</span><div id="countPending">0</div></div>
+            <div class="stat-item" style="color:var(--completed);"><span>เสร็จสิ้น</span><div id="countDone">0</div></div>
+        </div>
+
+        <div class="main-card">
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="ค้นห้อง..." onkeyup="filterData()"></div>
+                    <div class="btn-tab-group">
+                        <button class="btn-tab active" onclick="filterStatus('all', this)">ทั้งหมด</button>
+                        <button class="btn-tab" onclick="filterStatus('pending', this)">รอมารับ</button>
+                        <button class="btn-tab" onclick="filterStatus('completed', this)">เสร็จสิ้น</button>
+                    </div>
+                </div>
+                <button class="btn-add-main" onclick="openModal('addParcelModal')"><i class="fas fa-plus"></i> ลงทะเบียนใหม่</button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>ห้อง</th><th>ขนส่ง / ผู้รับ</th><th>สถานะ (คลิกดูรูป)</th><th>วันที่เข้า</th><th>จัดการ</th></tr></thead>
+                    <tbody id="parcelTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: ข้อมูลส่วนตัว (เหมือนต้นฉบับเป๊ะ) -->
+    <div id="profileModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="text-align:center; color:#5d4037; margin-top: 0;">👤 ข้อมูลส่วนตัว</h3>
+            <div style="text-align:center; margin-bottom:20px;">
+                <img src="https://i.pravatar.cc/150?u=admin" style="width:90px; height:90px; border-radius:50%; border:3px solid white; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
+            </div>
+            <div class="modal-input-group">
+                <label>ชื่อผู้ใช้งาน</label>
+                <input type="text" value="แอดมินนิติ" readonly>
+            </div>
+            <div class="modal-input-group">
+                <label>ตำแหน่ง</label>
+                <input type="text" value="ผู้ดูแลระบบ (Admin)" readonly>
+            </div>
+            <button class="btn-close-profile" onclick="closeModal('profileModal')">ปิดหน้าต่าง</button>
+        </div>
+    </div>
+
+    <!-- Modal: ยืนยันออกจากระบบ (เหมือนต้นฉบับเป๊ะ) -->
+    <div id="logoutConfirmModal" class="modal-overlay">
+        <div class="modal-card" style="text-align: center;">
+            <i class="fas fa-sign-out-alt" style="font-size: 45px; color: var(--danger); margin-bottom: 15px;"></i>
+            <h3 style="margin: 0;">ต้องการออกจากระบบ?</h3>
+            <p style="color: #888; margin-top: 8px; font-size: 14px;">คุณแน่ใจหรือไม่ว่าต้องการออกจากเซสชันนี้</p>
+            <div class="btn-row">
+                <button class="btn-cancel" onclick="closeModal('logoutConfirmModal')">ยกเลิก</button>
+                <button class="btn-confirm" onclick="location.reload()">ยืนยัน</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: ลงทะเบียนพัสดุ -->
+    <div id="addParcelModal" class="modal-overlay">
+        <div class="modal-card repair-style-modal">
+            <h3 style="margin:0;"><i class="fas fa-box-open"></i> ลงทะเบียนพัสดุใหม่</h3>
+            <div class="modal-input-group" style="margin-top:20px;"><input type="text" id="addRoom" placeholder="เลขห้อง..."></div>
+            <div class="modal-input-group">
+                <select id="addCarrier">
+                    <option value="" disabled selected>เลือกบริษัทขนส่ง...</option>
+                    <option value="Flash Express">Flash Express</option>
+                    <option value="Kerry Express">Kerry Express</option>
+                    <option value="J&T Express">J&T Express</option>
+                    <option value="ไปรษณีย์ไทย">ไปรษณีย์ไทย</option>
+                    <option value="อื่นๆ">อื่นๆ</option>
+                </select>
+            </div>
+            <div class="modal-input-group"><input type="text" id="addName" placeholder="ชื่อผู้รับ..."></div>
+            <input type="file" id="fileAdd" hidden accept="image/*" onchange="handleFileSelect(this, 'previewAdd')">
+            <div class="upload-area" onclick="document.getElementById('fileAdd').click()">
+                <i class="fas fa-image"></i><span>คลิกเพื่ออัปโหลดรูป</span><img id="previewAdd" class="preview-img">
+            </div>
+            <div class="btn-row">
+                <button class="btn-cancel" onclick="closeModal('addParcelModal')">ยกเลิก</button>
+                <button class="btn-brown" onclick="saveParcel()">บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: จัดการพัสดุ -->
+    <div id="manageParcelModal" class="modal-overlay">
+        <div class="modal-card repair-style-modal">
+            <h3><i class="fas fa-tools"></i> จัดการพัสดุ</h3>
+            <div class="modal-input-group"><input type="text" id="mRoom" readonly style="background:#f5f5f5;"></div>
+            <div class="modal-input-group">
+                <select id="mStatus">
+                    <option value="pending">รอมารับ</option>
+                    <option value="completed">เสร็จสิ้น</option>
+                </select>
+            </div>
+            <div class="btn-row">
+                <button class="btn-cancel" onclick="closeModal('manageParcelModal')">ยกเลิก</button>
+                <button class="btn-brown" onclick="updateParcelStatus()">บันทึกข้อมูล</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: ดูรูป -->
+    <div id="viewPhotoModal" class="modal-overlay">
+        <div class="modal-card repair-style-modal">
+            <h3 id="viewHeader"></h3>
+            <img id="imgFullView" style="width:100%; border-radius:15px; margin-top:15px;">
+            <button class="btn-brown" style="width:100%; margin-top:15px;" onclick="closeModal('viewPhotoModal')">ปิด</button>
+        </div>
+    </div>
+
+    <script>
+        let parcels = [];
+        let selectedId = null;
+        let currentFilter = 'all';
+        let currentBase64 = null;
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('active');
+            overlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
+        }
+
+        function openModal(id) { 
+            if(document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
+            document.getElementById(id).style.display = 'flex'; 
+        }
+
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function handleFileSelect(input, previewId) {
+            const file = input.files[0];
+            const preview = document.getElementById(previewId);
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = e => { preview.src = e.target.result; preview.style.display = 'block'; currentBase64 = e.target.result; };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function saveParcel() {
+            const r = document.getElementById('addRoom').value;
+            const c = document.getElementById('addCarrier').value;
+            const n = document.getElementById('addName').value;
+            if(!r || !c || !n) return alert("กรุณากรอกข้อมูลให้ครบ");
+            parcels.unshift({ id: Date.now(), room: r, carrier: c, name: n, status: 'pending', date: new Date().toLocaleDateString('th-TH'), img: currentBase64 });
+            renderTable(); closeModal('addParcelModal');
+            document.getElementById('addRoom').value = ''; document.getElementById('addName').value = ''; currentBase64 = null;
+        }
+
+        function renderTable(data = parcels) {
+            const tbody = document.getElementById('parcelTableBody');
+            tbody.innerHTML = '';
+            data.forEach(p => {
+                let badge = p.status === 'pending' ? 'bg-pending' : 'bg-completed';
+                let txt = p.status === 'pending' ? 'รอมารับ' : 'เสร็จสิ้น';
+                tbody.innerHTML += `<tr>
+                    <td><b>${p.room}</b></td>
+                    <td style="text-align:left;"><b>${p.carrier}</b><br><small>${p.name}</small></td>
+                    <td><span class="badge ${badge}" onclick="viewPhoto(${p.id})">${txt}</span></td>
+                    <td>${p.date}</td>
+                    <td><button class="btn-manage-row" onclick="editParcel(${p.id})">จัดการ</button></td>
+                </tr>`;
+            });
+            updateStats();
+        }
+
+        function editParcel(id) {
+            selectedId = id;
+            const p = parcels.find(x => x.id === id);
+            document.getElementById('mRoom').value = "ห้อง " + p.room;
+            document.getElementById('mStatus').value = p.status;
+            openModal('manageParcelModal');
+        }
+
+        function updateParcelStatus() {
+            const idx = parcels.findIndex(x => x.id === selectedId);
+            parcels[idx].status = document.getElementById('mStatus').value;
+            renderTable(); closeModal('manageParcelModal');
+        }
+
+        function viewPhoto(id) {
+            const p = parcels.find(x => x.id === id);
+            document.getElementById('viewHeader').innerText = "พัสดุห้อง " + p.room;
+            document.getElementById('imgFullView').src = p.img || 'https://via.placeholder.com/300?text=No+Photo';
+            openModal('viewPhotoModal');
+        }
+
+        function updateStats() {
+            document.getElementById('countTotal').innerText = parcels.length;
+            document.getElementById('countPending').innerText = parcels.filter(x => x.status === 'pending').length;
+            document.getElementById('countDone').innerText = parcels.filter(x => x.status === 'completed').length;
+        }
+
+        function filterStatus(s, b) {
+            document.querySelectorAll('.btn-tab').forEach(x => x.classList.remove('active'));
+            b.classList.add('active'); currentFilter = s; filterData();
+        }
+
+        function filterData() {
+            const v = document.getElementById('searchInput').value.toLowerCase();
+            const f = parcels.filter(x => (currentFilter === 'all' || x.status === currentFilter) && x.room.includes(v));
+            renderTable(f);
+        }
+
+        renderTable();
+    </script>
+</body>
+</html>
