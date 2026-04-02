@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cozy Home - ระบบสมาชิก (Tenant)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --c1: #CCD5AE; --c2: #E9EDC9; --c3: #FEFAE0; --c4: #FAEDCD; --c5: #D4A373;
+            --white: #ffffff; --text: #444; --light-text: #888; --danger: #e74c3c; --edit: #3498db;
+            --nav-height: 65px;
+        }
+
+        body { font-family: 'Sarabun', sans-serif; background-color: #f6f5f2; margin: 0; padding: 0; color: var(--text); overflow-x: hidden; }
+
+        /* --- Navbar --- */
+        .top-navbar { 
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 25px; height: var(--nav-height);
+            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #eee;
+        }
+        .nav-left { display: flex; align-items: center; gap: 15px; flex: 1; }
+        .menu-toggle { font-size: 20px; color: var(--c5); cursor: pointer; }
+        .brand-logo { font-weight: 600; color: #5d4037; font-size: 16px; letter-spacing: 1.5px; text-transform: uppercase; border-left: 2px solid #eee; padding-left: 15px; }
+        .nav-center { flex: 2; text-align: center; }
+        .page-title { margin: 0; font-size: 18px; font-weight: 600; color: var(--text); }
+
+        .nav-right { flex: 1; display: flex; justify-content: flex-end; position: relative; }
+        .user-nav-item { display: flex; align-items: center; cursor: pointer; padding: 5px; position: relative; }
+        .nav-user-small { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid var(--c4); }
+        
+        .user-dropdown { 
+            position: absolute; right: 0; top: 45px; background: white; border: 1px solid #f0f0f0; 
+            border-radius: 12px; display: none; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 160px; overflow: hidden; 
+        }
+        .user-nav-item:hover .user-dropdown { display: block; }
+        .user-dropdown button { display: block; width: 100%; padding: 12px 15px; border: none; background: none; text-align: left; font-size: 14px; cursor: pointer; font-family: 'Sarabun'; transition: 0.2s; color: #555; }
+        .user-dropdown button i { margin-right: 10px; width: 15px; color: #888; text-align: center; }
+        .user-dropdown button:hover { background: #fffaf4; color: var(--c5); }
+
+        /* --- Sidebar --- */
+        .sidebar { position: fixed; top: 0; left: -300px; width: 300px; height: 100%; background: var(--white); z-index: 2001; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 15px 0 40px rgba(0,0,0,0.1); overflow-y: auto; }
+        .sidebar.active { left: 0; }
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.2); z-index: 2000; display: none; backdrop-filter: blur(2px); }
+
+        .sidebar-header { padding: 40px 20px; text-align: center; background: linear-gradient(135deg, #faf1e6 0%, #ffffff 100%); border-bottom: 1px solid #f8f8f8; }
+        .sidebar-user-img { width: 85px; height: 85px; border-radius: 50%; border: 3px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.08); object-fit: cover; }
+        
+        .sidebar-menu { list-style: none; padding: 15px; margin: 0; }
+        .sidebar-menu li { margin-bottom: 2px; }
+        .sidebar-menu a { display: flex; align-items: center; gap: 12px; padding: 12px 15px; text-decoration: none; color: #555; border-radius: 12px; transition: 0.3s; font-weight: 500; font-size: 14.5px; }
+        .sidebar-menu a i { width: 20px; text-align: center; font-size: 16px; color: #999; }
+        .sidebar-menu a.active { background: #fff9f2; color: var(--c5); font-weight: 600; }
+        .sidebar-menu a.active i { color: var(--c5); }
+        .sidebar-menu a:hover:not(.active) { background: #fdfdfd; transform: translateX(5px); color: var(--c5); }
+        .sidebar-menu a.danger { color: var(--danger); margin-top: 10px; }
+        .sidebar-menu a.danger i { color: var(--danger); }
+
+        /* --- Content & Cards --- */
+        .container { width: 95%; max-width: 650px; margin: 25px auto; }
+        
+        .post-card { background: var(--white); border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); margin-bottom: 25px; position: relative; border: 1px solid #f0f0f0; overflow: hidden; animation: slideUp 0.4s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .post-header { padding: 18px 20px; display: flex; align-items: center; gap: 12px; }
+        .author-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--c4); }
+        .post-info b { color: #5d4037; font-size: 15px; }
+        .post-time { font-size: 11px; color: #bbb; display: block; margin-top: 2px; }
+
+        .post-content { padding: 0 20px 20px 20px; }
+        .post-content h3 { margin: 0 0 8px 0; color: #333; font-size: 18px; }
+        .post-content p { color: #666; line-height: 1.6; margin: 0; font-size: 14.5px; white-space: pre-wrap; }
+        .post-main-img { width: 100%; border-radius: 12px; margin-top: 15px; display: block; }
+
+        /* --- Dropdown Menu (ellipsis for comments only) --- */
+        .dot-menu { position: absolute; top: 10px; right: 10px; cursor: pointer; color: #ddd; padding: 12px; z-index: 10; }
+        .menu-dropdown { position: absolute; right: 5px; top: 42px; background: white; border: 1px solid #f0f0f0; border-radius: 12px; display: none; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 150px; overflow: hidden; }
+        .dot-menu:hover .menu-dropdown { display: block; }
+        .menu-dropdown button { display: block; width: 100%; padding: 12px 18px; border: none; background: none; text-align: left; font-size: 14px; cursor: pointer; font-family: 'Sarabun'; }
+        .menu-dropdown button:hover { background: #fffaf4; color: var(--c5); }
+
+        /* --- Comments --- */
+        .comment-section { background: #fafafa; border-top: 1px solid #f0f0f0; padding: 18px 20px; }
+        .comment-item { display: flex; gap: 10px; margin-bottom: 15px; position: relative; }
+        .comment-img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
+        .comment-bubble { background: white; padding: 10px 45px 10px 15px; border-radius: 15px; flex: 1; border: 1px solid #eee; position: relative; }
+        .comment-bubble b { font-size: 13px; color: #5d4037; }
+        .comment-text { font-size: 13.5px; margin: 5px 0; color: #555; line-height: 1.5; white-space: pre-wrap; }
+        .comment-input-box { display: flex; gap: 10px; margin-top: 15px; }
+        .comment-input-box input { flex: 1; border-radius: 20px; border: 1px solid #ddd; padding: 10px 18px; outline: none; font-family: 'Sarabun'; }
+        .btn-send { background: none; border: none; color: var(--c5); cursor: pointer; font-size: 20px; }
+
+        /* --- Modals --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        .modal-card { background: white; width: 90%; max-width: 450px; border-radius: 25px; padding: 30px; box-sizing: border-box; box-shadow: 0 20px 50px rgba(0,0,0,0.15); }
+        .modal-input-group { margin-bottom: 15px; }
+        .modal-input-group label { font-size: 13px; color: #888; margin-bottom: 5px; display: block; }
+        .modal-input-group input, .modal-input-group textarea { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Sarabun'; outline: none; box-sizing: border-box; font-size: 14.5px; }
+        .modal-input-group input[readonly] { background-color: #f1f1f1; color: #999; }
+        
+        .btn-row { display: flex; gap: 12px; margin-top: 20px; }
+        .btn-confirm { flex: 2; background: #e1ad7f; color: white; border: none; padding: 14px; border-radius: 12px; cursor: pointer; font-weight: bold; font-family: 'Sarabun'; }
+        .btn-cancel { flex: 1; background: #f1f1f1; border: none; padding: 14px; border-radius: 12px; cursor: pointer; color: #777; font-family: 'Sarabun'; }
+        .btn-close-profile { width: 100%; background: #f1f1f1; border: none; padding: 14px; border-radius: 12px; cursor: pointer; color: #777; font-family: 'Sarabun'; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div id="mainApp">
+    <!-- Navbar -->
+    <header class="top-navbar">
+        <div class="nav-left">
+            <div class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></div>
+            <div class="brand-logo">Cozy Home</div>
+        </div>
+        <div class="nav-center">
+            <h2 class="page-title" id="navPageTitle">กระดานข่าวสาร</h2>
+        </div>
+        <div class="nav-right">
+            <div class="user-nav-item">
+                <img src="https://i.pravatar.cc/150?u=tenant1" class="nav-user-small">
+                <div class="user-dropdown">
+                    <button onclick="openProfileModal()"><i class="fas fa-user-circle"></i> ข้อมูลส่วนตัว</button>
+                    <button onclick="openModal('logoutConfirmModal')" class="logout-btn"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <nav id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <img src="https://i.pravatar.cc/150?u=tenant1" class="sidebar-user-img">
+            <h4 style="margin:15px 0 0 0; color:#5d4037; font-size:17px;">คุณสมชาย ใจดี</h4>
+            <p style="font-size:12px; color:#aaa; margin-top:5px;">ห้อง 402 | ผู้เช่า</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="#" onclick="changePage('กระดานข่าวสาร', this)" class="active"><i class="fas fa-bullhorn"></i> กระดานข่าวสาร</a></li>
+            <li><a href="#" onclick="changePage('แจ้งชำระค่าน้ำ-ไฟ', this)"><i class="fas fa-tachometer-alt"></i> แจ้งชำระค่าน้ำ-ไฟ</a></li>
+            <li><a href="#" onclick="changePage('รายการพัสดุ', this)"><i class="fas fa-box"></i> รายการพัสดุของฉัน</a></li>
+            <li><a href="#" onclick="changePage('แจ้งซ่อม', this)"><i class="fas fa-tools"></i> แจ้งซ่อม/แจ้งปัญหา</a></li>
+            <li><a href="#" onclick="changePage('สัญญาเช่า', this)"><i class="fas fa-file-contract"></i> สัญญาเช่าของฉัน</a></li>
+            
+            <hr style="border:0; border-top:1px solid #f5f5f5; margin:15px 0;">
+            
+            <li><a href="#" onclick="openProfileModal()"><i class="fas fa-user-circle"></i> ข้อมูลส่วนตัว</a></li>
+            <li><a href="#" onclick="openModal('logoutConfirmModal')" class="danger"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container" id="newsBoardContent">
+        <!-- (ส่วนเขียนโพสต์ถูกตัดออกเพื่อให้เป็นสิทธิ์ของ Admin เท่านั้น) -->
+        
+        <!-- พื้นที่แสดงข่าวสาร -->
+        <div id="feedArea"></div>
+    </div>
+</div>
+
+<!-- Modal: ข้อมูลส่วนตัว (Read Only) -->
+<div id="profileModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 style="text-align:center; color:#5d4037; margin-top: 0;">👤 ข้อมูลส่วนตัว</h3>
+        <div style="text-align:center; margin-bottom:20px;">
+            <img src="https://i.pravatar.cc/150?u=tenant1" style="width:100px; height:100px; border-radius:50%; border:3px solid white; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
+        </div>
+        <div class="modal-input-group">
+            <label>ชื่อ-นามสกุล</label>
+            <input type="text" value="คุณสมชาย ใจดี" readonly>
+        </div>
+        <div class="modal-input-group">
+            <label>เลขห้อง / ยูนิต</label>
+            <input type="text" value="402" readonly>
+        </div>
+        <div class="modal-input-group">
+            <label>ประเภทสมาชิก</label>
+            <input type="text" value="ผู้เช่า / ผู้อยู่อาศัย" readonly>
+        </div>
+        <button class="btn-close-profile" onclick="closeModal('profileModal')">ปิดหน้าต่าง</button>
+    </div>
+</div>
+
+<!-- Modal: แก้ไขคอมเมนต์ -->
+<div id="editCmtModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3>✏️ แก้ไขคอมเมนต์</h3>
+        <div class="modal-input-group"><textarea id="editCmtInput" rows="4"></textarea></div>
+        <div class="btn-row">
+            <button class="btn-cancel" onclick="closeModal('editCmtModal')">ยกเลิก</button>
+            <button class="btn-confirm" onclick="saveEditComment()">บันทึกการแก้ไข</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: ยืนยันการลบ -->
+<div id="deleteConfirmModal" class="modal-overlay">
+    <div class="modal-card" style="text-align: center;">
+        <i class="fas fa-trash-alt" style="font-size: 50px; color: var(--danger); margin-bottom: 20px;"></i>
+        <h3 id="delConfirmTitle">ยืนยันการลบ?</h3>
+        <p style="color:#888;">ข้อมูลนี้จะถูกลบถาวรและไม่สามารถเรียกคืนได้</p>
+        <div class="btn-row">
+            <button class="btn-cancel" onclick="closeModal('deleteConfirmModal')">ยกเลิก</button>
+            <button class="btn-confirm" id="btnFinalDelete" style="background:var(--danger);">ลบทันที</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: ยืนยันออกจากระบบ -->
+<div id="logoutConfirmModal" class="modal-overlay">
+    <div class="modal-card" style="text-align: center;">
+        <i class="fas fa-sign-out-alt" style="font-size: 50px; color: var(--danger); margin-bottom: 20px;"></i>
+        <h3 style="margin: 0;">ต้องการออกจากระบบ?</h3>
+        <p style="color: #888; margin-top: 10px;">คุณแน่ใจหรือไม่ว่าต้องการออกจากเซสชันนี้</p>
+        <div class="btn-row">
+            <button class="btn-cancel" onclick="closeModal('logoutConfirmModal')">ยกเลิก</button>
+            <button class="btn-confirm" onclick="location.reload()" style="background:var(--danger);">ยืนยันออกจากระบบ</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let editingCmtId = null;
+    let itemToDeleteId = null;
+
+    // ข้อมูลจำลองของผู้ใช้งานปัจจุบัน (Tenant)
+    const CURRENT_USER = { name: "คุณสมชาย ใจดี", img: "https://i.pravatar.cc/150?u=tenant1" };
+    const ADMIN_USER = { name: "แอดมินนิติ", img: "https://i.pravatar.cc/150?u=admin" };
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('active');
+        const overlay = document.getElementById('sidebarOverlay');
+        overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function changePage(title, element) {
+        document.getElementById('navPageTitle').innerText = title;
+        const menuLinks = document.querySelectorAll('.sidebar-menu a');
+        menuLinks.forEach(link => link.classList.remove('active'));
+        if(element) element.classList.add('active');
+
+        const newsContent = document.getElementById('newsBoardContent');
+        newsContent.style.display = (title === 'กระดานข่าวสาร') ? 'block' : 'none';
+
+        toggleSidebar(); 
+    }
+
+    function openProfileModal() { openModal('profileModal'); }
+
+    function getThaiTime() {
+        const n = new Date();
+        return n.toLocaleDateString('th-TH', {day:'numeric', month:'short', year:'numeric'}) + " | " + n.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}) + " น.";
+    }
+
+    function openModal(id) { 
+        if(document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
+        document.getElementById(id).style.display = 'flex'; 
+    }
+    
+    function closeModal(id) { 
+        document.getElementById(id).style.display = 'none'; 
+    }
+
+    // --- ระบบคอมเมนต์ (ผู้เช่ายังทำได้) ---
+    function addComment(btn, pid) {
+        const inp = btn.parentElement.querySelector('input');
+        if(!inp.value.trim()) return;
+        const cid = 'cmt-' + Date.now();
+        const html = `
+            <div class="comment-item" id="${cid}">
+                <img src="${CURRENT_USER.img}" class="comment-img">
+                <div class="comment-bubble">
+                    <div class="dot-menu" style="top:5px; right:5px; padding:5px;"><i class="fas fa-ellipsis-h" style="font-size:12px;"></i>
+                        <div class="menu-dropdown" style="top:30px; width:120px;">
+                            <button onclick="openEditCmt('${cid}')">แก้ไข</button>
+                            <button onclick="askDelete('${cid}', 'คอมเมนต์')" style="color:var(--danger)">ลบ</button>
+                        </div>
+                    </div>
+                    <b>${CURRENT_USER.name}</b>
+                    <p class="comment-text">${inp.value}</p>
+                    <span style="font-size:9px; color:#bbb;">เพิ่งเมื่อสักครู่ <span class="cmt-edit-tag"></span></span>
+                </div>
+            </div>`;
+        document.getElementById(pid).querySelector('.cmt-list').insertAdjacentHTML('beforeend', html);
+        inp.value = "";
+    }
+
+    function openEditCmt(id) {
+        editingCmtId = id;
+        document.getElementById('editCmtInput').value = document.getElementById(id).querySelector('.comment-text').innerText;
+        openModal('editCmtModal');
+    }
+
+    function saveEditComment() {
+        const newText = document.getElementById('editCmtInput').value.trim();
+        if(!newText) return;
+        const cmt = document.getElementById(editingCmtId);
+        cmt.querySelector('.comment-text').innerText = newText;
+        cmt.querySelector('.cmt-edit-tag').innerText = ` (แก้ไขแล้ว: ${getThaiTime()})`;
+        closeModal('editCmtModal');
+    }
+
+    // --- ระบบลบ ---
+    function askDelete(id, type) {
+        itemToDeleteId = id;
+        document.getElementById('delConfirmTitle').innerText = `ยืนยันการลบ${type}?`;
+        openModal('deleteConfirmModal');
+    }
+
+    document.getElementById('btnFinalDelete').onclick = function() {
+        if(itemToDeleteId) {
+            const el = document.getElementById(itemToDeleteId);
+            if(el) { el.style.opacity = '0'; setTimeout(() => { el.remove(); closeModal('deleteConfirmModal'); }, 200); }
+        }
+    }
+
+    // สร้างประกาศตัวอย่าง (เสมือนมาจาก Admin)
+    function createInitialPost(id, title, desc, img = "") {
+        const html = `
+            <article class="post-card" id="${id}">
+                <div class="post-header">
+                    <img src="${ADMIN_USER.img}" class="author-img">
+                    <div class="post-info">
+                        <b>${ADMIN_USER.name}</b>
+                        <span class="post-time">10 ต.ค. 2023 | 09:00 น.</span>
+                    </div>
+                </div>
+                <div class="post-content">
+                    <h3>${title}</h3>
+                    <p>${desc}</p>
+                    ${img ? `<img src="${img}" class="post-main-img">` : ''}
+                </div>
+                <div class="comment-section">
+                    <div class="cmt-list"></div>
+                    <div class="comment-input-box">
+                        <input type="text" placeholder="เขียนคอมเมนต์...">
+                        <button onclick="addComment(this, '${id}')" class="btn-send"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </article>`;
+        document.getElementById('feedArea').insertAdjacentHTML('beforeend', html);
+    }
+
+    window.onload = () => {
+        createInitialPost('p1', 'ประกาศฉีดพ่นยุง ประจำเดือนตุลาคม', 'นิติบุคคลจะเข้าทำการฉีดพ่นยากำจัดยุงในพื้นที่ส่วนกลาง ในวันอาทิตย์นี้ เวลา 10:00 - 12:00 น. ขออภัยในความไม่สะดวกครับ');
+        createInitialPost('p2', 'แจ้งปิดปรับปรุงสระว่ายน้ำ', 'ทางโครงการขอแจ้งปิดปรับปรุงสระว่ายน้ำชั่วคราวเพื่อทำความสะอาดใหญ่ ในวันที่ 15-16 ตุลานี้ครับ', 'https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?auto=format&fit=crop&w=800&q=80');
+    };
+</script>
+</body>
+</html>
