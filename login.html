@@ -11,7 +11,9 @@
             --c1: #CCD5AE; --c2: #E9EDC9; --c3: #FEFAE0; --c4: #FAEDCD; --c5: #D4A373;
             --white: #ffffff; --text: #444; --danger: #e74c3c; --input-blue: #edf2fa; 
         }
+
         body { font-family: 'Sarabun', sans-serif; background-color: #f1efeb; margin: 0; padding: 0; color: var(--text); overflow-x: hidden; }
+
         /* --- Auth Section --- */
         #authSection { display: flex; justify-content: center; align-items: center; height: 100vh; width: 100%; background-color: #eeeae6; padding: 20px; box-sizing: border-box; }
         .login-card { 
@@ -26,7 +28,9 @@
         .role-tabs { display: flex; background: #f0f0f0; border-radius: 15px; padding: 6px; width: 100%; margin-bottom: 25px; }
         .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; background: none; cursor: pointer; font-family: 'Sarabun'; font-size: 15px; color: #888; transition: 0.3s; }
         .tab-btn.active { background: var(--white); color: #d4a373; box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-weight: bold; }
+
         .form-title { font-size: 20px; color: #5d4037; margin-bottom: 25px; font-weight: bold; }
+
         .input-group { width: 100%; text-align: left; margin-bottom: 18px; position: relative; }
         .input-group label { display: block; font-size: 13px; color: #999; margin-bottom: 5px; margin-left: 5px; }
         .field-container { position: relative; width: 100%; }
@@ -35,13 +39,18 @@
             width: 100%; padding: 15px 20px 15px 50px; border-radius: 15px; border: none; 
             background: var(--input-blue); box-sizing: border-box; outline: none; font-family: 'Sarabun'; font-size: 15px; transition: 0.3s;
         }
+
         .btn-login { width: 100%; padding: 18px; border: none; border-radius: 18px; background: #e1ad7f; color: white; font-weight: bold; font-size: 18px; cursor: pointer; transition: 0.3s; margin-top: 15px; box-shadow: 0 8px 15px rgba(225, 173, 127, 0.3); }
         .btn-login:hover { background: #d4a373; transform: translateY(-2px); }
+
         .signup-link { margin-top: 30px; font-size: 14px; color: #aaa; }
         .signup-link span { color: #d4a373; cursor: pointer; font-weight: bold; text-decoration: underline; }
+
         .avatar-circle { width: 100px; height: 100px; border-radius: 50% !important; object-fit: cover; border: 3px solid var(--white); box-shadow: 0 5px 15px rgba(0,0,0,0.1); cursor: pointer; display: block; margin: 0 auto; }
         .click-to-change { font-size: 12px; color: #d4a373; margin: 5px 0 15px 0; text-decoration: underline; cursor: pointer; font-weight: 600; }
+
         .login-right { flex: 1; background-image: url('https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=2000&auto=format&fit=crop'); background-size: cover; background-position: center; }
+
         /* --- Modals --- */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(8px); padding: 20px; }
         .modal-card { background: white; width: 95%; max-width: 450px; border-radius: 40px; padding: 40px; text-align: center; box-sizing: border-box; animation: slideUp 0.4s ease; }
@@ -52,6 +61,7 @@
     </style>
 </head>
 <body>
+
 <div id="authSection">
     <div class="login-card">
         <!-- 1. ส่วนล็อกอิน -->
@@ -75,9 +85,11 @@
                 <a href="#" onclick="openModal('forgotModal')" style="color:#d4a373; text-decoration:none; font-size: 13px; font-weight:600;">ลืมรหัสผ่าน?</a>
                 <a href="#" onclick="openModal('changePassModal')" style="color:#999; text-decoration:none; font-size: 13px;">เปลี่ยนรหัสผ่าน</a>
             </div>
+
             <button class="btn-login" onclick="handleLogin()">เข้าสู่ระบบ</button>
             <div class="signup-link">ยังไม่มีบัญชี? <span onclick="showRegister()">สมัครสมาชิกใหม่</span></div>
         </div>
+
         <!-- 2. ส่วนสมัครสมาชิก -->
         <div class="login-left" id="registerForm" style="display: none;">
             <div class="form-title">สมัครสมาชิกใหม่</div>
@@ -85,12 +97,14 @@
                 <button class="tab-btn active" id="regTabTenant" onclick="switchRegRole('TENANT')">ผู้เช่า</button>
                 <button class="tab-btn" id="regTabAdmin" onclick="switchRegRole('ADMIN')">แอดมิน</button>
             </div>
+
             <!-- อัปโหลดรูปโปรไฟล์ (ซ่อนถ้าเป็นแอดมิน) -->
             <div id="regAvatarSection">
                 <img src="https://i.pravatar.cc/150?u=new" class="avatar-circle" id="regAvatarPrev" onclick="document.getElementById('regAvatarInput').click()">
                 <input type="file" id="regAvatarInput" hidden accept="image/*" onchange="previewAvatar(this, 'regAvatarPrev')">
                 <p class="click-to-change" onclick="document.getElementById('regAvatarInput').click()">คลิกเพื่อเปลี่ยนรูป</p>
             </div>
+
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; width:100%;">
                 <div class="input-group"><label>ชื่อผู้ใช้</label><div class="field-container"><i class="fas fa-signature"></i><input type="text" id="regName" placeholder="ระบุชื่อจริง"></div></div>
                 <div class="input-group" id="regRoomField"><label>เลขห้อง</label><div class="field-container"><i class="fas fa-door-open"></i><input type="text" id="regRoom" placeholder="เช่น 101"></div></div>
@@ -103,9 +117,11 @@
             <button class="btn-login" onclick="handleRegister()">ยืนยันลงทะเบียน</button>
             <div class="signup-link"><span onclick="showLogin()">กลับไปหน้าล็อกอิน</span></div>
         </div>
+
         <div class="login-right"></div>
     </div>
 </div>
+
 <!-- Modal: ลืมรหัสผ่าน -->
 <div id="forgotModal" class="modal-overlay"><div class="modal-card">
     <h3 style="color:#5d4037;"><i class="fas fa-key" style="color: #ffb703;"></i> กู้คืนรหัสผ่าน</h3>
@@ -114,6 +130,7 @@
     <div class="input-group"><label>รหัสผ่านใหม่</label><div class="field-container"><i class="fas fa-lock"></i><input type="password" id="forgotNewPass" placeholder="รหัสผ่านใหม่"></div></div>
     <div class="btn-row"><button class="btn-cancel" onclick="closeModal('forgotModal')">ยกเลิก</button><button class="btn-confirm" onclick="handleResetPassword()">ตั้งรหัสใหม่</button></div>
 </div></div>
+
 <!-- Modal: เปลี่ยนรหัสผ่าน -->
 <div id="changePassModal" class="modal-overlay"><div class="modal-card">
     <h3 style="color:#5d4037;">เปลี่ยนรหัสผ่าน</h3>
@@ -122,6 +139,7 @@
     <div class="input-group"><label>รหัสผ่านใหม่</label><div class="field-container"><i class="fas fa-unlock-alt"></i><input type="password" id="newPass" placeholder="รหัสผ่านใหม่"></div></div>
     <div class="btn-row"><button class="btn-cancel" onclick="closeModal('changePassModal')">ยกเลิก</button><button class="btn-confirm" onclick="handleChangePassword()">อัปเดต</button></div>
 </div></div>
+
 <script>
     // เริ่มต้น Database (มี Admin เป็นค่าเริ่มต้น)
     if (!localStorage.getItem('cozy_users')) {
@@ -129,15 +147,18 @@
             "admin": { name: "แอดมินนิติ", room: "", pass: "1234", img: "https://i.pravatar.cc/150?u=admin", role: "ADMIN", email:"", phone:"" } 
         }));
     }
+
     let selectedLoginRole = "TENANT";
     let selectedRegRole = "TENANT";
     let tempAvatar = "";
+
     function switchRole(role) { 
         selectedLoginRole = role; 
         document.getElementById('tabTenant').classList.toggle('active', role === 'TENANT'); 
         document.getElementById('tabAdmin').classList.toggle('active', role === 'ADMIN'); 
         document.getElementById('formTitle').innerText = role === 'TENANT' ? 'เข้าสู่ระบบผู้เช่า' : 'เข้าสู่ระบบผู้ดูแล (Admin)'; 
     }
+
     // สลับหน้าสมัครสมาชิก (แอดมินให้กรอกแค่ชื่อ รหัสผ่าน)
     function switchRegRole(role) {
         selectedRegRole = role;
@@ -151,10 +172,12 @@
         document.getElementById('regPhoneField').style.display = display;
         document.getElementById('regLineField').style.display = display;
     }
+
     function showRegister() { document.getElementById('loginForm').style.display = 'none'; document.getElementById('registerForm').style.display = 'flex'; }
     function showLogin() { document.getElementById('registerForm').style.display = 'none'; document.getElementById('loginForm').style.display = 'flex'; }
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
     function previewAvatar(input, prevId) { 
         if (input.files && input.files[0]) { 
             const reader = new FileReader(); 
@@ -165,14 +188,17 @@
             reader.readAsDataURL(input.files[0]); 
         } 
     }
+
     // สมัครสมาชิก (รองรับทั้ง ผู้เช่า และ แอดมิน)
     function handleRegister() {
         const n = document.getElementById('regName').value.trim();
         const p = document.getElementById('regPassword').value.trim();
         
         if(!n || !p) return alert("กรุณากรอกชื่อผู้ใช้และรหัสผ่าน");
+
         const users = JSON.parse(localStorage.getItem('cozy_users'));
         if(users[n]) return alert("ชื่อผู้ใช้งานนี้มีอยู่ในระบบแล้ว");
+
         if(selectedRegRole === 'TENANT') {
             const r = document.getElementById('regRoom').value.trim();
             if(!r) return alert("กรุณาระบุเลขห้อง");
@@ -191,41 +217,29 @@
                 email: "", phone: "", line: "" 
             };
         }
+
         localStorage.setItem('cozy_users', JSON.stringify(users));
         alert("ลงทะเบียนสำเร็จ!"); 
         showLogin();
     }
-// ตัวอย่างการเปลี่ยนฟังก์ชัน Login ให้เชื่อม DB จริง
-async function handleLogin() {
-    const u = document.getElementById('loginUsername').value.trim();
-    const p = document.getElementById('loginPassword').value.trim();
 
-    const formData = new FormData();
-    formData.append('username', u);
-    formData.append('password', p);
-    formData.append('role', selectedLoginRole);
+    // ล็อกอิน
+    function handleLogin() {
+        const u = document.getElementById('loginUsername').value.trim();
+        const p = document.getElementById('loginPassword').value.trim();
+        const users = JSON.parse(localStorage.getItem('cozy_users'));
 
-    try {
-        // ดึงข้อมูลจาก API แทน localStorage
-        const response = await fetch('auth_api.php?action=login', {
-            method: 'POST',
-            body: formData
-        });
-        const result = await response.json();
-
-        if(result.status === "success") {
-            alert("เข้าสู่ระบบสำเร็จ! สวัสดีคุณ " + result.user.fullname);
-            // เก็บข้อมูลผู้ใช้ไว้ใน Session เพื่อไปใช้หน้าอื่น
-            sessionStorage.setItem('user', JSON.stringify(result.user));
-            window.location.href = "newsboard.html"; // หรือหน้า Dashboard ของคุณ
+        if(users[u] && users[u].pass === p) {
+            if(users[u].role !== selectedLoginRole) {
+                alert(`กรุณาเข้าสู่ระบบผ่านแท็บ "${users[u].role === 'ADMIN' ? 'ผู้ดูแล' : 'ผู้เช่า'}"`);
+                return;
+            }
+            alert("เข้าสู่ระบบสำเร็จ! สวัสดีคุณ " + users[u].name);
         } else {
-            alert(result.message);
+            alert("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!");
         }
-    } catch (error) {
-        console.error("Error:", error);
-        alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
     }
-}
+
     function handleResetPassword() {
         const u = document.getElementById('forgotUser').value.trim();
         const r = document.getElementById('forgotRoom').value.trim();
@@ -236,6 +250,7 @@ async function handleLogin() {
             alert("ตั้งรหัสผ่านใหม่สำเร็จ!"); closeModal('forgotModal');
         } else alert("ข้อมูลไม่ถูกต้อง!");
     }
+
     function handleChangePassword() {
         const u = document.getElementById('changeUser').value.trim();
         const op = document.getElementById('oldPass').value;
@@ -247,5 +262,6 @@ async function handleLogin() {
         } else alert("รหัสเดิมผิดหรือไม่มีชื่อผู้ใช้นี้!");
     }
 </script>
+
 </body>
 </html>
