@@ -3,251 +3,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการสัญญาเช่าหอพัก</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Cozy Home - สัญญาเช่าดิจิทัล</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* --- ตัวแปรสีจาก Dashboard ต้นฉบับ --- */
         :root {
             --c1: #CCD5AE; --c2: #E9EDC9; --c3: #FEFAE0; --c4: #FAEDCD; --c5: #D4A373;
-            --text: #555; --success: #4F772D; --danger: #e63946;
+            --white: #ffffff; --text: #444; --danger: #e74c3c;
+            --nav-height: 65px;
+            /* สีสำหรับตัวสัญญา */
+            --primary-beige: #DBA87E;
+            --line-color: #EBC89D;
+            --text-main: #4A4A4A;
+            --text-sub: #8E8E8E;
         }
 
-        body { margin: 0; background: var(--c3); font-family: 'Sarabun', sans-serif; color: var(--text); padding-bottom: 50px; }
-        .container { max-width: 1100px; margin: auto; padding: 20px; }
-        
-        .header-brand { text-align: center; margin: 30px 0; }
-        .header-brand h1 { color: var(--c5); font-size: 32px; font-weight: 600; }
-
-        .card { background: white; border-radius: 24px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,.05); margin-bottom: 20px; }
-
-        /* --- ผังห้อง --- */
-        .floor-section { margin-bottom: 30px; }
-        .floor-title { font-weight: bold; color: var(--c5); margin-bottom: 15px; border-left: 5px solid var(--c5); padding-left: 15px; font-size: 1.2rem; }
-        .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; }
-        
-        .room-btn { 
-            aspect-ratio: 1/1; border: 2px solid var(--c2); background: white; border-radius: 18px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            cursor: pointer; transition: 0.3s; font-weight: bold; color: var(--text);
-        }
-        .room-btn:hover { background: var(--c4); transform: translateY(-3px); border-color: var(--c5); }
-        .room-btn.has-contract { background: var(--c1); border-color: var(--success); color: var(--success); }
-        .room-btn i { display: none; font-size: 16px; margin-bottom: 4px; }
-        .room-btn.has-contract i { display: block; }
-
-        /* --- หน้าสัญญา --- */
-        #contract-view { display: none; }
-        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: sticky; top: 10px; z-index: 100; }
-        
-        .contract-paper { 
-            line-height: 1.8; font-size: 16px; color: #111; padding: 25mm 20mm; 
-            background: #fff; border: 1px solid #eee; box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            max-width: 210mm; margin: auto;
+        body { 
+            font-family: 'Sarabun', sans-serif; 
+            background-color: #f6f5f2; /* พื้นหลังสีเทาอ่อนตาม Dashboard */
+            margin: 0; padding: 0; color: var(--text); 
+            overflow-x: hidden;
+            /* ป้องกันการคัดลอก */
+            -webkit-user-select: none; user-select: none;
         }
 
-        .contract-paper h2 { text-align: center; margin-bottom: 30px; text-decoration: underline; }
-
-        input[type="text"], input[type="number"] { 
-            border: none; border-bottom: 1px dotted var(--c5); background: transparent; 
-            padding: 0 5px; font-family: 'Sarabun'; font-size: 16px; outline: none; color: #000;
+        /* --- Navbar (Copy 100%) --- */
+        .top-navbar { 
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 25px; height: var(--nav-height);
+            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #eee;
         }
-        input:focus { background: #fff9c4; }
+        .nav-left { display: flex; align-items: center; gap: 15px; flex: 1; }
+        .menu-toggle { font-size: 20px; color: var(--c5); cursor: pointer; }
+        .brand-logo { font-weight: 600; color: #5d4037; font-size: 16px; letter-spacing: 1.5px; text-transform: uppercase; border-left: 2px solid #eee; padding-left: 15px; }
+        .nav-center { flex: 2; text-align: center; }
+        .page-title { margin: 0; font-size: 18px; font-weight: 600; color: var(--text); }
+        .nav-right { flex: 1; display: flex; justify-content: flex-end; position: relative; }
+        .user-nav-item { display: flex; align-items: center; cursor: pointer; padding: 5px; position: relative; }
+        .nav-user-small { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid var(--c4); }
         
-        /* สไตล์สำหรับช่องที่ล็อคไว้ (Readonly) */
-        input[readonly] { border-bottom: none !important; font-weight: bold; color: var(--success); cursor: default; }
+        .user-dropdown { 
+            position: absolute; right: 0; top: 45px; background: white; border: 1px solid #f0f0f0; 
+            border-radius: 12px; display: none; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 160px; overflow: hidden; 
+        }
+        .user-nav-item:hover .user-dropdown { display: block; }
+        .user-dropdown button { display: block; width: 100%; padding: 12px 15px; border: none; background: none; text-align: left; font-size: 14px; cursor: pointer; font-family: 'Sarabun'; transition: 0.2s; color: #555; }
+        .user-dropdown button i { margin-right: 10px; width: 15px; color: #888; text-align: center; }
+        .user-dropdown button:hover { background: #fffaf4; color: var(--c5); }
 
-        .btn { padding: 12px 25px; border-radius: 50px; border: none; cursor: pointer; font-weight: bold; font-family: 'Sarabun'; display: flex; align-items: center; gap: 8px; font-size: 15px; }
-        .btn-back { background: #eee; color: #555; }
-        .btn-save { background: var(--success); color: white; }
-        .btn-print { background: var(--c5); color: white; }
-        .btn-delete { background: var(--danger); color: white; }
+        /* --- Sidebar (Copy 100%) --- */
+        .sidebar { position: fixed; top: 0; left: -300px; width: 300px; height: 100%; background: var(--white); z-index: 2001; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 15px 0 40px rgba(0,0,0,0.1); overflow-y: auto; }
+        .sidebar.active { left: 0; }
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.2); z-index: 2000; display: none; backdrop-filter: blur(2px); }
 
-        .sig-row { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; text-align: center; }
-        .sig-block { margin-bottom: 20px; }
-        .sig-line { border-bottom: 1px solid #000; width: 80%; margin: 30px auto 5px auto; }
+        .sidebar-header { padding: 40px 20px; text-align: center; background: linear-gradient(135deg, #faf1e6 0%, #ffffff 100%); border-bottom: 1px solid #f8f8f8; }
+        .sidebar-user-img { width: 85px; height: 85px; border-radius: 50%; border: 3px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.08); object-fit: cover; }
+        
+        .sidebar-menu { list-style: none; padding: 15px; margin: 0; }
+        .sidebar-menu li { margin-bottom: 2px; }
+        .sidebar-menu a { display: flex; align-items: center; gap: 12px; padding: 12px 15px; text-decoration: none; color: #555; border-radius: 12px; transition: 0.3s; font-weight: 500; font-size: 14.5px; }
+        .sidebar-menu a i { width: 20px; text-align: center; font-size: 16px; color: #999; }
+        .sidebar-menu a.active { background: #fff9f2; color: var(--c5); font-weight: 600; }
+        .sidebar-menu a.active i { color: var(--c5); }
+        .sidebar-menu a:hover:not(.active) { background: #fdfdfd; transform: translateX(5px); color: var(--c5); }
+        .sidebar-menu a.danger { color: var(--danger); margin-top: 10px; }
+        .sidebar-menu a.danger i { color: var(--danger); }
 
-        @media print {
-            @page { size: A4; margin: 0; }
-            body { background: white; padding: 1.5cm; }
-            .container { max-width: 100%; padding: 0; }
-            .toolbar, .header-brand, #main-dashboard { display: none !important; }
-            .card { box-shadow: none; border: none; padding: 0; margin: 0; }
-            #contract-view { display: block !important; }
-            .contract-paper { border: none; box-shadow: none; padding: 0; font-size: 13px !important; line-height: 1.6 !important; max-width: 100%; }
-            .contract-paper h2 { font-size: 20px !important; margin-bottom: 20px !important; }
-            input { border-bottom: none !important; font-size: 13px !important; }
-            .sig-row { gap: 20px !important; margin-top: 30px !important; }
+        /* --- ส่วนเนื้อหาสัญญา (รักษาดีไซน์เดิม) --- */
+        .content-container {
+            padding: 40px 15px;
+            display: flex;
+            justify-content: center;
+            background-color: #848484; /* พื้นหลังสีเทาเข้มเฉพาะส่วนสัญญาเพื่อให้ดูเหมือนกระดาษวางอยู่ */
+            min-height: calc(100vh - var(--nav-height));
+        }
+
+        .paper { 
+            background: #FFFFFF; width: 100%; max-width: 800px; 
+            padding: 60px 80px; border-radius: 40px; 
+            box-shadow: 0 15px 50px rgba(0,0,0,0.25); position: relative;
+            overflow: hidden; align-self: flex-start;
+        }
+
+        .watermark {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 80px; font-weight: 700; color: rgba(219, 168, 126, 0.05);
+            white-space: nowrap; pointer-events: none; z-index: 0;
+        }
+
+        .contract-header { text-align: center; margin-bottom: 50px; position: relative; z-index: 1; }
+        .contract-header h1 { 
+            font-size: 26px; font-weight: 700; color: var(--primary-beige); 
+            margin: 0; text-decoration: underline; text-underline-offset: 10px;
+        }
+
+        .doc-info { text-align: right; margin-bottom: 30px; font-size: 15px; color: var(--text-sub); }
+        .no-split { display: inline-block; white-space: nowrap; vertical-align: bottom; }
+        .dynamic-data { border-bottom: 1px dotted var(--line-color); padding: 0 5px; font-weight: 600; color: var(--text-main); }
+
+        .content-body { position: relative; z-index: 1; text-align: left; word-break: keep-all; line-height: 1.8; }
+        .indent { display: inline-block; width: 60px; }
+        .clause { margin-bottom: 15px; display: block; }
+        .clause-title { font-weight: 700; color: var(--text-main); }
+
+        .signature-area { 
+            margin-top: 60px; display: flex; justify-content: space-around; text-align: center; 
+        }
+        .sig-box { width: 280px; }
+        .sig-line { border-bottom: 1px solid var(--line-color); margin-bottom: 10px; height: 50px; }
+
+        .security-footer { 
+            margin-top: 60px; padding: 25px; background: #FFF9F3; 
+            border: 1px dashed var(--line-color); border-radius: 25px;
+            text-align: center; font-size: 13px; color: var(--primary-beige);
+        }
+
+        /* --- Modals (Copy 100%) --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        .modal-card { background: white; width: 90%; max-width: 450px; border-radius: 25px; padding: 30px; box-sizing: border-box; box-shadow: 0 20px 50px rgba(0,0,0,0.15); }
+        .btn-close-profile { width: 100%; background: #f1f1f1; border: none; padding: 14px; border-radius: 12px; cursor: pointer; color: #777; font-family: 'Sarabun'; margin-top: 10px; }
+
+        /* ป้องกันการพิมพ์ */
+        @media print { body { display: none !important; } }
+
+        @media (max-width: 600px) {
+            .paper { padding: 40px 25px; }
+            .signature-area { flex-direction: column; gap: 40px; align-items: center; }
+            .indent { width: 30px; }
         }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
-<div class="container" id="main-dashboard">
-    <div class="header-brand">
-        <h1><i class="fas fa-file-signature"></i> ระบบจัดการสัญญาเช่า</h1>
-        <p>เรียงลำดับชั้น 1 - 5 | ข้อมูลถูกบันทึกไว้ในเบราว์เซอร์นี้</p>
-    </div>
-    <div class="card" id="floor-plan"></div>
-</div>
+    <!-- Navbar -->
+    <header class="top-navbar">
+        <div class="nav-left">
+            <div class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></div>
+            <div class="brand-logo">Cozy Home</div>
+        </div>
+        <div class="nav-center">
+            <h2 class="page-title">สัญญาเช่าของฉัน</h2>
+        </div>
+        <div class="nav-right">
+            <div class="user-nav-item">
+                <img src="https://i.pravatar.cc/150?u=tenant1" class="nav-user-small">
+                <div class="user-dropdown">
+                    <button onclick="openProfileModal()"><i class="fas fa-user-circle"></i> ข้อมูลส่วนตัว</button>
+                    <button onclick="location.reload()"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</button>
+                </div>
+            </div>
+        </div>
+    </header>
 
-<div class="container" id="contract-view">
-    <div class="toolbar no-print">
-        <button class="btn btn-back" onclick="closeContract()"><i class="fas fa-arrow-left"></i> กลับหน้าผังห้อง</button>
-        <div style="display:flex; gap:10px;">
-            <button class="btn btn-delete" id="delete-btn" onclick="deleteData()" style="display:none;"><i class="fas fa-trash-alt"></i> ลบข้อมูลห้องนี้</button>
-            <button class="btn btn-save" onclick="saveData()"><i class="fas fa-save"></i> บันทึกข้อมูล</button>
-            <button class="btn btn-print" onclick="window.print()"><i class="fas fa-print"></i> พิมพ์สัญญา (PDF)</button>
+    <!-- Sidebar Overlay -->
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <nav id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <img src="https://i.pravatar.cc/150?u=tenant1" class="sidebar-user-img">
+            <h4 style="margin:15px 0 0 0; color:#5d4037; font-size:17px;">คุณสมชาย ใจดี</h4>
+            <p style="font-size:12px; color:#aaa; margin-top:5px;">ห้อง 402 | ผู้เช่า</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="#"><i class="fas fa-bullhorn"></i> กระดานข่าวสาร</a></li>
+            <li><a href="#"><i class="fas fa-tachometer-alt"></i> แจ้งชำระค่าน้ำ-ไฟ</a></li>
+            <li><a href="#"><i class="fas fa-box"></i> รายการพัสดุของฉัน</a></li>
+            <li><a href="#"><i class="fas fa-tools"></i> แจ้งซ่อม/แจ้งปัญหา</a></li>
+            <li><a href="#" class="active"><i class="fas fa-file-contract"></i> สัญญาเช่าของฉัน</a></li>
+            <hr style="border:0; border-top:1px solid #f5f5f5; margin:15px 0;">
+            <li><a href="#" onclick="openProfileModal()"><i class="fas fa-user-circle"></i> ข้อมูลส่วนตัว</a></li>
+            <li><a href="#" onclick="location.reload()" class="danger"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="content-container">
+        <div class="paper">
+            <div class="watermark">COZY HOME DIGITAL</div>
+
+            <div class="contract-header">
+                <h1>หนังสือสัญญาเช่าที่พักอาศัย</h1>
+            </div>
+
+            <div class="doc-info">
+                ทำที่ <span class="no-split dynamic-data">หอพัก Cozy Home</span><br>
+                วันที่ <span id="v-docDate" class="no-split dynamic-data">...</span>
+            </div>
+
+            <div class="content-body">
+                <p>
+                    <span class="indent"></span>สัญญาฉบับนี้ทำขึ้นระหว่าง <span class="no-split dynamic-data">นางสาวณัฐรินทร์ สุขใส</span> 
+                    เรียกว่า <span class="no-split"><b>“ผู้ให้เช่า”</b></span> ฝ่ายหนึ่ง กับ 
+                    <span id="v-tenantName" class="no-split dynamic-data">...</span> 
+                    ถือบัตรประชาชนเลขที่ <span id="v-tenantID" class="no-split dynamic-data">...</span> 
+                    เรียกว่า <span class="no-split"><b>“ผู้เช่า”</b></span> อีกฝ่ายหนึ่ง โดยมีรายละเอียดดังนี้
+                </p>
+
+                <span class="clause">
+                    <span class="clause-title">ข้อ 1. รายละเอียดห้องพัก:</span> ผู้ให้เช่าตกลงให้ผู้เช่าเช่าห้องพักเลขที่ 
+                    <span id="v-roomNo" class="no-split dynamic-data">...</span> ชั้นที่ <span id="v-floor" class="no-split dynamic-data">...</span> 
+                    ของอาคาร <span class="no-split dynamic-data">Cozy Home</span> เพื่อพักอาศัย
+                </span>
+
+                <span class="clause">
+                    <span class="clause-title">ข้อ 2. ระยะเวลาการเช่า:</span> มีกำหนดระยะเวลา <span class="no-split dynamic-data">6 เดือน</span> 
+                    เริ่มตั้งแต่วันที่ <span id="v-startDate" class="no-split dynamic-data">...</span> 
+                    ถึงวันที่ <span id="v-endDate" class="no-split dynamic-data">...</span>
+                </span>
+
+                <span class="clause">
+                    <span class="clause-title">ข้อ 3. ค่าเช่าและเงินประกัน:</span> ตกลงชำระค่าเช่าเดือนละ 
+                    <span id="v-rent" class="no-split dynamic-data">...</span> บาท 
+                    และวางเงินประกันความเสียหาย <span id="v-deposit" class="no-split dynamic-data">...</span> บาท 
+                    ซึ่งจะได้รับคืนเมื่อสิ้นสุดสัญญาตามเงื่อนไข
+                </span>
+
+                <span class="clause">
+                    <span class="clause-title">ข้อ 4. ค่าบริการและสาธารณูปโภค:</span> ค่าไฟฟ้าหน่วยละ <span id="v-elec" class="no-split dynamic-data">...</span> บาท 
+                    ค่าน้ำหน่วยละ <span id="v-water" class="no-split dynamic-data">...</span> บาท 
+                    และค่าปรับชำระล่าช้าวันละ <span id="v-fine" class="no-split dynamic-data">...</span> บาท
+                </span>
+
+                <span class="clause">
+                    <span class="clause-title">ข้อ 5. การชำระเงิน:</span> ผู้เช่าตกลงชำระค่าเช่าและค่าบริการต่างๆ ภายในวันที่ 
+                    <span id="v-payDay" class="no-split dynamic-data">...</span> ของทุกเดือน
+                </span>
+
+                <p><span class="indent"></span>คู่สัญญาทั้งสองฝ่ายได้อ่านและยอมรับข้อกำหนดในสัญญานี้ผ่านระบบดิจิทัล</p>
+
+                <div class="signature-area">
+                    <div class="sig-box">
+                        <div class="sig-line"></div>
+                        <p>(<span class="no-split">นางสาวณัฐรินทร์ สุขใส</span>)<br>ผู้ให้เช่า</p>
+                    </div>
+                    <div class="sig-box">
+                        <div class="sig-line"></div>
+                        <p>(<span id="v-tenantName2" class="no-split dynamic-data">...</span>)<br>ผู้เช่า</p>
+                    </div>
+                </div>
+
+                <div class="security-footer">
+                    <i class="fas fa-shield-alt"></i> <b>Digital Contract System (View Only)</b><br>
+                    เอกสารนี้จัดแสดงข้อมูลสัญญาปัจจุบันเพื่อการเรียกดูเท่านั้น <br>
+                    ระบบถูกจำกัดสิทธิ์การพิมพ์และการคัดลอกข้อมูลเพื่อรักษาความปลอดภัยของคู่สัญญา
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="card contract-paper" id="printable-contract">
-        <h2>สัญญาเช่าพักอาศัย</h2>
-        
-        <div style="text-align: right; margin-bottom: 20px;">
-            <strong>ทำที่:</strong> <input type="text" id="loc_name" style="width: 200px;" placeholder="ชื่อหอพัก"><br>
-            <strong>วันที่:</strong> <input type="text" id="c_day" style="width: 30px;" placeholder="วัน"> 
-            <strong>เดือน:</strong> <input type="text" id="c_month" style="width: 100px;" placeholder="เดือน"> 
-            <strong>พ.ศ.</strong> <input type="text" id="c_year" style="width: 60px;" placeholder="ปี">
-        </div>
-
-        <p>สัญญาฉบับนี้ทำขึ้นระหว่าง:<br>
-        <strong>ผู้ให้เช่า:</strong> <input type="text" id="owner_name" style="width: 250px;" placeholder="ชื่อเจ้าของ"> 
-        อยู่บ้านเลขที่ <input type="text" id="owner_addr" style="width: 350px;" placeholder="ที่อยู่ผู้ให้เช่า"><br>
-        <strong>ผู้เช่า:</strong> <input type="text" id="tenant_name" style="width: 250px;" placeholder="ชื่อผู้เช่า"> 
-        บัตรประชาชนเลขที่ <input type="text" id="tenant_id" style="width: 200px;" placeholder="เลขบัตรประชาชน"> 
-        อยู่บ้านเลขที่ <input type="text" id="tenant_addr" style="width: 350px;" placeholder="ที่อยู่ตามทะเบียนบ้าน"></p>
-
-        <p>ทั้งสองฝ่ายตกลงทำสัญญากันดังมีข้อความต่อไปนี้:</p>
-
-        <p><strong>ข้อ 1. ทรัพย์สินที่เช่า:</strong> ผู้ให้เช่าตกลงให้เช่า และผู้เช่าตกลงเช่าห้องพักเลขที่ 
-        <input type="text" id="c_room_id" style="width: 60px; text-align: center;" readonly tabindex="-1"> 
-        ชั้น <input type="text" id="c_floor" style="width: 30px; text-align: center;" readonly tabindex="-1"> 
-        ของ <input type="text" id="loc_name_2" style="width: 150px;" placeholder="ชื่อหอพัก"> เพื่อใช้เป็นที่พักอาศัยเท่านั้น</p>
-
-        <p><strong>ข้อ 2. ระยะเวลาการเช่า:</strong> มีกำหนดระยะเวลา <input type="text" id="c_term" style="width: 50px;" placeholder="6 เดือน"> เริ่มตั้งแต่วันที่ 
-        <input type="text" id="c_start" style="width: 120px;" placeholder="ว/ด/ป"> ถึงวันที่ <input type="text" id="c_end" style="width: 120px;" placeholder="ว/ด/ป"></p>
-
-        <p><strong>ข้อ 3. ค่าเช่าและค่าธรรมเนียม:</strong><br>
-        3.1 ผู้เช่าตกลงชำระค่าเช่าในอัตราเดือนละ <input type="text" id="c_rent" style="width: 100px;"> บาท<br>
-        3.2 ต้องชำระภายในวันที่ <input type="text" id="c_due" style="width: 30px;"> ของทุกเดือน หากล่าช้าตกลงเสียค่าปรับวันละ <input type="text" id="c_fine" style="width: 50px;"> บาท<br>
-        3.3 ค่าไฟฟ้าหน่วยละ <input type="text" id="c_elec" style="width: 40px;"> บาท / ค่าน้ำหน่วยละ <input type="text" id="c_water" style="width: 40px;"> บาท</p>
-
-        <p><strong>ข้อ 4. เงินประกันและการวางเงินล่วงหน้า:</strong> ในวันทำสัญญานี้ ผู้เช่าได้วางเงินประกันความเสียหายจำนวน <input type="text" id="c_depo" style="width: 100px;"> บาท และค่าเช่าล่วงหน้า 1 เดือน จำนวน <input type="text" id="c_pre" style="width: 100px;"> บาท</p>
-
-        <p><strong>ข้อ 5. หน้าที่ของผู้เช่า:</strong> ห้ามนำบุคคลอื่นมาพักอาศัยถาวร, ห้ามเลี้ยงสัตว์ทุกชนิด, ห้ามประกอบกิจการผิดกฎหมาย, ห้ามดัดแปลงต่อเติมห้องพัก และต้องรักษาความสงบไม่ส่งเสียงดังรบกวนผู้อื่น</p>
-
-        <p><strong>ข้อ 6. การเลิกสัญญา:</strong> หากย้ายออกก่อนกำหนด ผู้ให้เช่ามีสิทธิ์ริบเงินประกันทั้งหมด และหากค้างค่าเช่าเกิน 15 วัน ผู้ให้เช่ามีสิทธิ์บอกเลิกสัญญาได้ทันที</p>
-
-        <p><strong>ข้อ 7. การคืนห้องพัก:</strong> เมื่อสิ้นสุดสัญญา ผู้เช่าต้องดูแลห้องพักให้อยู่ในสภาพดีดังเดิม หากมีสิ่งของเสียหายผู้เช่าต้องชดใช้ตามจริง</p>
-
-        <div class="sig-row">
-            <div class="sig-block">
-                <div class="sig-line"></div>
-                ลงชื่อ......................................................ผู้ให้เช่า<br>
-                (<input type="text" id="sig_owner" style="text-align:center; width:180px;">)
+    <!-- Profile Modal (Copy 100%) -->
+    <div id="profileModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="text-align:center; color:#5d4037; margin-top: 0;">👤 ข้อมูลส่วนตัว</h3>
+            <div style="text-align:center; margin-bottom:20px;">
+                <img src="https://i.pravatar.cc/150?u=tenant1" style="width:100px; height:100px; border-radius:50%; border:3px solid white; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
             </div>
-            <div class="sig-block">
-                <div class="sig-line"></div>
-                ลงชื่อ......................................................ผู้เช่า<br>
-                (<input type="text" id="sig_tenant" style="text-align:center; width:180px;">)
-            </div>
-            <div class="sig-block">
-                <div class="sig-line"></div>
-                ลงชื่อ......................................................พยาน<br>
-                (<input type="text" style="text-align:center; width:180px;">)
-            </div>
-            <div class="sig-block">
-                <div class="sig-line"></div>
-                ลงชื่อ......................................................พยาน<br>
-                (<input type="text" style="text-align:center; width:180px;">)
-            </div>
+            <p style="text-align:center; color: #555;"><b>คุณสมชาย ใจดี</b><br>ห้อง 402</p>
+            <button class="btn-close-profile" onclick="closeModal('profileModal')">ปิดหน้าต่าง</button>
         </div>
     </div>
-</div>
 
-<script>
-    let activeRoom = null;
-    let db = JSON.parse(localStorage.getItem('dorm_system_v2')) || {};
+    <script>
+        // ฟังก์ชันควบคุม Sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('active');
+            overlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
+        }
 
-    function renderFloorPlan() {
-        const container = document.getElementById('floor-plan');
-        container.innerHTML = '';
-        // เรียงจากชั้น 1 ไป ชั้น 5
-        for (let f = 1; f <= 5; f++) {
-            let html = `<div class="floor-section"><div class="floor-title">🏢 ชั้นที่ ${f}</div><div class="room-grid">`;
-            for (let r = 1; r <= 10; r++) {
-                const id = f * 100 + r;
-                const isDone = db[id] ? 'has-contract' : '';
-                const tenantName = db[id] ? db[id].tenant_name : 'ว่าง';
-                html += `
-                    <button class="room-btn ${isDone}" onclick="openContract(${id})">
-                        <i class="fas fa-check-circle"></i>
-                        <span>${id}</span>
-                        <small style="font-size:10px; font-weight:normal; opacity:0.8;">${tenantName}</small>
-                    </button>`;
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function openProfileModal() { openModal('profileModal'); }
+
+        // ดึงข้อมูลสัญญา
+        window.onload = function() {
+            const data = JSON.parse(localStorage.getItem('contractData'));
+            if (data) {
+                document.getElementById('v-docDate').innerText = data.docDate || '-';
+                document.getElementById('v-tenantName').innerText = data.tenantName || '-';
+                document.getElementById('v-tenantName2').innerText = data.tenantName || '-';
+                document.getElementById('v-tenantID').innerText = data.tenantID || '-';
+                document.getElementById('v-roomNo').innerText = data.roomNo || '-';
+                document.getElementById('v-floor').innerText = data.floor || '-';
+                document.getElementById('v-startDate').innerText = data.startDate || '-';
+                document.getElementById('v-endDate').innerText = data.endDate || '-';
+                document.getElementById('v-rent').innerText = data.rent || '-';
+                document.getElementById('v-deposit').innerText = data.deposit || '-';
+                document.getElementById('v-elec').innerText = data.electric || '-';
+                document.getElementById('v-water').innerText = data.water || '-';
+                document.getElementById('v-payDay').innerText = data.payDay || '-';
+                document.getElementById('v-fine').innerText = data.fine || '-';
             }
-            html += `</div></div>`;
-            container.innerHTML += html;
-        }
-    }
+        };
 
-    function openContract(roomId) {
-        activeRoom = roomId;
-        document.getElementById('main-dashboard').style.display = 'none';
-        document.getElementById('contract-view').style.display = 'block';
-        
-        // ล็อคเลขห้องและชั้นอัตโนมัติ
-        document.getElementById('c_room_id').value = roomId;
-        document.getElementById('c_floor').value = Math.floor(roomId/100);
-
-        // แสดง/ซ่อนปุ่มลบ
-        document.getElementById('delete-btn').style.display = db[roomId] ? 'flex' : 'none';
-
-        if(db[roomId]) {
-            const data = db[roomId];
-            for (let key in data) {
-                const el = document.getElementById(key);
-                // ข้ามการใส่ค่าซ้ำในฟิลด์ที่ล็อคไว้
-                if(el && key !== 'c_room_id' && key !== 'c_floor') el.value = data[key];
+        // ป้องกันการพิมพ์และการคัดลอก
+        window.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 's' || e.key === 'u')) {
+                e.preventDefault();
             }
-        } else {
-            // ล้างข้อมูลช่องที่กรอกได้ แต่คงข้อมูลส่วนกลางไว้
-            const fixedFields = ['c_room_id', 'c_floor', 'loc_name', 'loc_name_2', 'owner_name', 'owner_addr', 'sig_owner'];
-            document.querySelectorAll('#printable-contract input').forEach(inp => {
-                if(!fixedFields.includes(inp.id)) inp.value = '';
-            });
-        }
-        window.scrollTo(0,0);
-    }
+        });
 
-    function saveData() {
-        const inputs = document.querySelectorAll('#printable-contract input');
-        let data = {};
-        inputs.forEach(inp => { if(inp.id) data[inp.id] = inp.value; });
-        
-        db[activeRoom] = data;
-        localStorage.setItem('dorm_system_v2', JSON.stringify(db));
-        alert('บันทึกข้อมูลห้อง ' + activeRoom + ' สำเร็จ!');
-        closeContract();
-    }
-
-    function deleteData() {
-        if (confirm(`คุณต้องการลบข้อมูลสัญญาทั้งหมดของห้อง ${activeRoom} ใช่หรือไม่?`)) {
-            delete db[activeRoom];
-            localStorage.setItem('dorm_system_v2', JSON.stringify(db));
-            alert('ลบข้อมูลเรียบร้อยแล้ว');
-            closeContract();
-        }
-    }
-
-    function closeContract() {
-        document.getElementById('main-dashboard').style.display = 'block';
-        document.getElementById('contract-view').style.display = 'none';
-        renderFloorPlan();
-    }
-
-    renderFloorPlan();
-</script>
-
+        window.addEventListener('keyup', function(e) {
+            if (e.key === 'PrintScreen') {
+                alert('Security Alert: ไม่อนุญาตให้จับภาพหน้าจอสัญญาเช่า');
+            }
+        });
+    </script>
 </body>
 </html>
